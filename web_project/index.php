@@ -1,6 +1,6 @@
 <?php
 /**
- * Space Invaders - Juego Web con Inicio de Sesión y Récords
+ * Space Invaders - Juego Web con Autenticación por Token JSON y Password HASH
  */
 require_once __DIR__ . '/config/db.php';
 ?>
@@ -11,7 +11,7 @@ require_once __DIR__ . '/config/db.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders</title>
     
-    <!-- Fuentes limpias -->
+    <!-- Tipografía moderna y amigable -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -96,8 +96,8 @@ require_once __DIR__ . '/config/db.php';
             gap: 8px;
         }
 
-        /* BADGE DE USUARIO */
-        .user-badge {
+        /* BADGE DE USUARIO AUTENTICADO */
+        .user-pill {
             background: rgba(56, 189, 248, 0.1);
             border: 1px solid rgba(56, 189, 248, 0.25);
             color: var(--accent-mint);
@@ -110,17 +110,17 @@ require_once __DIR__ . '/config/db.php';
             gap: 6px;
         }
 
-        .btn-switch-user {
+        .btn-logout {
             background: none;
             border: none;
             color: var(--text-secondary);
             font-size: 0.78rem;
             cursor: pointer;
             text-decoration: underline;
-            padding: 0 4px;
+            padding-left: 4px;
         }
 
-        .btn-switch-user:hover {
+        .btn-logout:hover {
             color: #fff;
         }
 
@@ -144,6 +144,12 @@ require_once __DIR__ . '/config/db.php';
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(255, 255, 255, 0.2);
             transform: translateY(-1px);
+        }
+
+        .btn-header.highlight {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: var(--accent-mint);
         }
 
         /* CONTENEDOR PRINCIPAL */
@@ -266,7 +272,7 @@ require_once __DIR__ . '/config/db.php';
         }
 
         /* =====================================================================
-           MODALES (LOGIN & PUNTUACIONES)
+           MODALES (OVERLAY Y VENTANAS)
            ===================================================================== */
         .modal-overlay {
             position: fixed;
@@ -288,7 +294,7 @@ require_once __DIR__ . '/config/db.php';
             background: #171c28;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            max-width: 480px;
+            max-width: 440px;
             width: 100%;
             padding: 24px;
             display: flex;
@@ -331,35 +337,78 @@ require_once __DIR__ . '/config/db.php';
             color: #fff;
         }
 
-        /* MODAL DE LOGIN */
-        .login-intro {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
+        /* PESTAÑAS LOGIN / REGISTRO */
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 4px;
         }
 
-        .login-form {
+        .auth-tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-tab.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .auth-form {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
-        .login-input {
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .auth-input {
             width: 100%;
             background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
-            padding: 12px 16px;
-            border-radius: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
             font-family: var(--font-main);
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 0.95rem;
             outline: none;
         }
 
-        .login-input:focus {
+        .auth-input:focus {
             border-color: var(--accent-mint);
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        .auth-error {
+            background: rgba(255, 92, 92, 0.15);
+            color: var(--accent-coral);
+            border: 1px solid rgba(255, 92, 92, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: none;
         }
 
         /* CAJA DE PUNTAJE TRAS PARTIDA */
@@ -471,13 +520,13 @@ require_once __DIR__ . '/config/db.php';
             </div>
 
             <div class="header-actions">
-                <!-- Identificación del Jugador -->
-                <div class="user-badge" id="userBadgeBox" style="display: none;">
+                <!-- Identificación del Jugador con Token -->
+                <div class="user-pill" id="userBadgeBox" style="display: none;">
                     <span>👤</span>
-                    <span id="displayUsername">Jugador</span>
-                    <button type="button" class="btn-switch-user" id="btnSwitchUser" title="Cambiar de usuario">(Cambiar)</button>
+                    <span id="displayUsername">Usuario</span>
+                    <button type="button" class="btn-logout" id="btnLogout" title="Cerrar sesión">(Salir)</button>
                 </div>
-                <button type="button" class="btn-header" id="btnLoginOpen" style="display: none;">
+                <button type="button" class="btn-header highlight" id="btnLoginOpen" style="display: none;">
                     🔑 Iniciar Sesión
                 </button>
 
@@ -538,24 +587,37 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =========================================================================
-         MODAL 1: LOGIN SENCILLO ANTES DE JUGAR
+         MODAL 1: AUTENTICACIÓN (LOGIN & REGISTRO CON PASSWORD HASH Y TOKEN)
          ========================================================================= -->
-    <div class="modal-overlay" id="loginModal">
+    <div class="modal-overlay" id="authModal">
         <div class="modal-dialog">
             <div class="modal-header">
-                <div class="modal-title">
-                    <span>👾</span> Iniciar Sesión de Jugador
+                <div class="modal-title" id="authModalTitle">
+                    <span>👾</span> Iniciar Sesión
                 </div>
-                <button type="button" class="btn-close" id="btnCloseLogin">✕</button>
+                <button type="button" class="btn-close" id="btnCloseAuth">✕</button>
             </div>
 
-            <p class="login-intro">
-                Ingresa tu nombre o apodo antes de empezar para que tus puntuaciones se guarden automáticamente en el ranking:
-            </p>
+            <!-- Selector Pestañas: Login / Registro -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" id="tabLogin">Iniciar Sesión</button>
+                <button type="button" class="auth-tab" id="tabRegister">Crear Cuenta</button>
+            </div>
 
-            <form class="login-form" id="loginForm">
-                <input type="text" class="login-input" id="loginUsernameInput" placeholder="Tu nombre o apodo (ej. Alex)" maxlength="20" required autocomplete="off">
-                <button type="submit" class="btn-primary" id="btnLoginSubmit" style="width: 100%;">
+            <div class="auth-error" id="authErrorMsg"></div>
+
+            <form class="auth-form" id="authForm">
+                <div class="form-group">
+                    <label class="form-label" for="authUsernameInput">Usuario</label>
+                    <input type="text" class="auth-input" id="authUsernameInput" placeholder="Ej. Alex" maxlength="20" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authPasswordInput">Contraseña</label>
+                    <input type="password" class="auth-input" id="authPasswordInput" placeholder="Tu contraseña" minlength="4" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-primary" id="btnAuthSubmit" style="width: 100%; margin-top: 4px;">
                     Entrar a Jugar
                 </button>
             </form>
@@ -581,7 +643,7 @@ require_once __DIR__ . '/config/db.php';
                 <span class="score-banner-value" id="finalScoreVal">0</span>
             </div>
 
-            <!-- Aviso de guardado automático -->
+            <!-- Aviso de guardado automático con Token -->
             <div class="toast-msg" id="autoSavedNotice" style="display: none;"></div>
 
             <!-- Tabla de Récords -->
@@ -1175,7 +1237,7 @@ require_once __DIR__ . '/config/db.php';
         }
 
         // =====================================================================
-        // CONTROLADOR DE PÁGINA, LOGIN Y GUARDADO AUTOMÁTICO
+        // CONTROLADOR DE PÁGINA, TOKEN AUTH Y GUARDADO AUTOMÁTICO
         // =====================================================================
         document.addEventListener('DOMContentLoaded', () => {
             const hudScore       = document.getElementById('hudScore');
@@ -1188,37 +1250,46 @@ require_once __DIR__ . '/config/db.php';
             const btnToggleSound = document.getElementById('btnToggleSound');
             const soundIcon      = document.getElementById('soundIcon');
 
-            // Elementos de Usuario
+            // Autenticación
             const userBadgeBox       = document.getElementById('userBadgeBox');
             const displayUsername    = document.getElementById('displayUsername');
-            const btnSwitchUser      = document.getElementById('btnSwitchUser');
+            const btnLogout          = document.getElementById('btnLogout');
             const btnLoginOpen       = document.getElementById('btnLoginOpen');
 
-            // Modal Login
-            const loginModal         = document.getElementById('loginModal');
-            const loginForm          = document.getElementById('loginForm');
-            const loginUsernameInput = document.getElementById('loginUsernameInput');
-            const btnCloseLogin      = document.getElementById('btnCloseLogin');
+            // Modal Autenticación
+            const authModal          = document.getElementById('authModal');
+            const authModalTitle     = document.getElementById('authModalTitle');
+            const tabLogin           = document.getElementById('tabLogin');
+            const tabRegister        = document.getElementById('tabRegister');
+            const authForm           = document.getElementById('authForm');
+            const authUsernameInput  = document.getElementById('authUsernameInput');
+            const authPasswordInput  = document.getElementById('authPasswordInput');
+            const btnAuthSubmit      = document.getElementById('btnAuthSubmit');
+            const authErrorMsg       = document.getElementById('authErrorMsg');
+            const btnCloseAuth       = document.getElementById('btnCloseAuth');
 
-            // Modal Récords
-            const scoreModal       = document.getElementById('scoreModal');
-            const modalHeading     = document.getElementById('modalHeading');
-            const scoreBannerBox   = document.getElementById('scoreBannerBox');
-            const finalScoreVal    = document.getElementById('finalScoreVal');
-            const autoSavedNotice  = document.getElementById('autoSavedNotice');
-            const scoresBody       = document.getElementById('scoresBody');
-            const btnPlayAgain     = document.getElementById('btnPlayAgain');
-            const btnCloseModal    = document.getElementById('btnCloseModal');
+            // Modal Puntuaciones
+            const scoreModal         = document.getElementById('scoreModal');
+            const modalHeading       = document.getElementById('modalHeading');
+            const scoreBannerBox     = document.getElementById('scoreBannerBox');
+            const finalScoreVal      = document.getElementById('finalScoreVal');
+            const autoSavedNotice    = document.getElementById('autoSavedNotice');
+            const scoresBody         = document.getElementById('scoresBody');
+            const btnPlayAgain       = document.getElementById('btnPlayAgain');
+            const btnCloseModal      = document.getElementById('btnCloseModal');
 
-            let currentUser = localStorage.getItem('si_player_name') || '';
+            let authMode = 'login'; // 'login' o 'register'
+            let authToken = localStorage.getItem('si_auth_token') || '';
+            let authUsername = localStorage.getItem('si_auth_user') || '';
+
             let currentScore = 0;
             let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
             hudHiScore.textContent = record.toLocaleString();
 
-            // Sincronizar estado visual del usuario
-            function syncUserUI() {
-                if (currentUser) {
-                    displayUsername.textContent = currentUser;
+            // Sincronizar UI de usuario
+            function syncAuthUI() {
+                if (authToken && authUsername) {
+                    displayUsername.textContent = authUsername;
                     userBadgeBox.style.display = 'flex';
                     btnLoginOpen.style.display = 'none';
                 } else {
@@ -1226,46 +1297,123 @@ require_once __DIR__ . '/config/db.php';
                     btnLoginOpen.style.display = 'inline-flex';
                 }
             }
-            syncUserUI();
+            syncAuthUI();
 
-            // Abrir Modal de Login
-            function openLoginModal() {
-                loginUsernameInput.value = currentUser || '';
-                loginModal.classList.add('active');
-                setTimeout(() => loginUsernameInput.focus(), 100);
+            // Verificar validez del Token al cargar
+            if (authToken) {
+                fetch('api.php?action=verify_token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success && res.data && res.data.username) {
+                        authUsername = res.data.username;
+                        localStorage.setItem('si_auth_user', authUsername);
+                        syncAuthUI();
+                    } else {
+                        // Token expirado o inválido
+                        clearAuth();
+                    }
+                })
+                .catch(() => {});
             }
 
-            function closeLoginModal() {
-                loginModal.classList.remove('active');
+            function clearAuth() {
+                authToken = '';
+                authUsername = '';
+                localStorage.removeItem('si_auth_token');
+                localStorage.removeItem('si_auth_user');
+                syncAuthUI();
             }
 
-            // Guardar usuario al enviar formulario de login
-            loginForm.addEventListener('submit', async (e) => {
+            // Gestión de pestañas Login / Registro
+            function setAuthMode(mode) {
+                authMode = mode;
+                authErrorMsg.style.display = 'none';
+                if (mode === 'login') {
+                    tabLogin.classList.add('active');
+                    tabRegister.classList.remove('active');
+                    authModalTitle.innerHTML = '<span>👾</span> Iniciar Sesión';
+                    btnAuthSubmit.textContent = 'Entrar a Jugar';
+                } else {
+                    tabRegister.classList.add('active');
+                    tabLogin.classList.remove('active');
+                    authModalTitle.innerHTML = '<span>🚀</span> Crear Cuenta';
+                    btnAuthSubmit.textContent = 'Registrar y Jugar';
+                }
+            }
+
+            tabLogin.addEventListener('click', () => setAuthMode('login'));
+            tabRegister.addEventListener('click', () => setAuthMode('register'));
+
+            function openAuthModal(defaultMode = 'login') {
+                setAuthMode(defaultMode);
+                authUsernameInput.value = authUsername || '';
+                authPasswordInput.value = '';
+                authModal.classList.add('active');
+                setTimeout(() => authUsernameInput.focus(), 100);
+            }
+
+            function closeAuthModal() {
+                authModal.classList.remove('active');
+            }
+
+            // Enviar Formulario de Autenticación
+            authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const name = loginUsernameInput.value.trim();
-                if (!name) return;
+                authErrorMsg.style.display = 'none';
 
-                currentUser = name;
-                localStorage.setItem('si_player_name', currentUser);
-                syncUserUI();
-                closeLoginModal();
+                const username = authUsernameInput.value.trim();
+                const password = authPasswordInput.value;
 
-                // Notificar a la API
+                if (!username || !password) return;
+
+                btnAuthSubmit.disabled = true;
+                btnAuthSubmit.textContent = 'Verificando...';
+
+                const endpoint = authMode === 'register' ? 'api.php?action=register' : 'api.php?action=login';
+
                 try {
-                    await fetch('api.php?action=login', {
+                    const res = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: currentUser })
+                        body: JSON.stringify({ username, password })
                     });
-                } catch(e) {}
+                    const json = await res.json();
+
+                    if (json.success && json.data && json.data.token) {
+                        authToken = json.data.token;
+                        authUsername = json.data.username;
+
+                        // Guardar en localStorage
+                        localStorage.setItem('si_auth_token', authToken);
+                        localStorage.setItem('si_auth_user', authUsername);
+
+                        syncAuthUI();
+                        closeAuthModal();
+                    } else {
+                        authErrorMsg.textContent = json.message || 'Error de autenticación';
+                        authErrorMsg.style.display = 'block';
+                    }
+                } catch(err) {
+                    authErrorMsg.textContent = 'Error de conexión con el servidor';
+                    authErrorMsg.style.display = 'block';
+                } finally {
+                    btnAuthSubmit.disabled = false;
+                    btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar a Jugar' : 'Registrar y Jugar';
+                }
             });
 
             // Manejador del juego
             const game = new SpaceInvaders('gameCanvas', {
                 onRequestStart: () => {
-                    // Si el usuario aún no ha iniciado sesión, pedirle que lo haga primero
-                    if (!currentUser) {
-                        openLoginModal();
+                    // Si no está autenticado con Token, abrir login
+                    if (!authToken) {
+                        openAuthModal('login');
                     } else {
                         game.start();
                     }
@@ -1287,12 +1435,11 @@ require_once __DIR__ . '/config/db.php';
                 },
                 onGameOver: async (score) => {
                     currentScore = score;
-                    // Abrir pantalla de Game Over y subir puntuación automáticamente
                     await handleGameOver(score);
                 }
             });
 
-            // GESTIÓN DE GAME OVER Y SUBIDA AUTOMÁTICA
+            // SUBIDA AUTOMÁTICA AUTENTICADA POR TOKEN JSON
             async function handleGameOver(score) {
                 modalHeading.innerHTML = '<span>👾</span> ¡Partida Terminada!';
                 scoreBannerBox.style.display = 'flex';
@@ -1301,24 +1448,27 @@ require_once __DIR__ . '/config/db.php';
 
                 scoreModal.classList.add('active');
 
-                // Si hay usuario logueado y el puntaje es > 0, subirlo automáticamente
-                if (currentUser && score > 0) {
+                // Si está autenticado y sacó más de 0 puntos, subir con Token JSON
+                if (authToken && score > 0) {
                     try {
                         const res = await fetch('api.php?action=submit_score', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: currentUser, score: score })
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ score: score })
                         });
                         const json = await res.json();
                         if (json.success) {
-                            autoSavedNotice.innerHTML = `✅ ¡Puntuación guardada para <strong>${escapeHtml(currentUser)}</strong>! (Posición #${json.data.rank})`;
+                            autoSavedNotice.innerHTML = `✅ ¡Puntuación guardada para <strong>${escapeHtml(json.data.username)}</strong> con Token! (Posición #${json.data.rank})`;
                             autoSavedNotice.style.display = 'block';
                         }
                     } catch(err) {
-                        console.error('Error al subir puntuación:', err);
+                        console.error('Error al subir puntuación con Token:', err);
                     }
-                } else if (!currentUser) {
-                    autoSavedNotice.innerHTML = `💡 Inicia sesión para que tus puntuaciones se guarden automáticamente.`;
+                } else if (!authToken) {
+                    autoSavedNotice.innerHTML = `💡 Inicia sesión para que tus récords se guarden automáticamente en tu cuenta.`;
                     autoSavedNotice.style.display = 'block';
                 }
 
@@ -1338,7 +1488,7 @@ require_once __DIR__ . '/config/db.php';
             }
 
             async function fetchLeaderboard() {
-                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando...</td></tr>`;
+                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando puntuaciones...</td></tr>`;
 
                 try {
                     const res = await fetch('api.php?action=leaderboard');
@@ -1368,7 +1518,7 @@ require_once __DIR__ . '/config/db.php';
                     else if (s.rank === 2) { pos = '🥈 2'; rowClass = 'top-2'; }
                     else if (s.rank === 3) { pos = '🥉 3'; rowClass = 'top-3'; }
 
-                    const isCurrent = currentUser && s.username.toLowerCase() === currentUser.toLowerCase();
+                    const isCurrent = authUsername && s.username.toLowerCase() === authUsername.toLowerCase();
                     const highlightStyle = isCurrent ? 'style="background: rgba(56, 189, 248, 0.1);"' : '';
 
                     html += `
@@ -1391,8 +1541,8 @@ require_once __DIR__ . '/config/db.php';
 
             // Eventos de botones
             btnPlayGame.addEventListener('click', () => {
-                if (!currentUser) {
-                    openLoginModal();
+                if (!authToken) {
+                    openAuthModal('login');
                 } else {
                     closeScoreModal();
                     game.start();
@@ -1413,15 +1563,15 @@ require_once __DIR__ . '/config/db.php';
             });
 
             btnLoginOpen.addEventListener('click', () => {
-                openLoginModal();
+                openAuthModal('login');
             });
 
-            btnSwitchUser.addEventListener('click', () => {
-                openLoginModal();
+            btnLogout.addEventListener('click', () => {
+                clearAuth();
             });
 
-            btnCloseLogin.addEventListener('click', () => {
-                closeLoginModal();
+            btnCloseAuth.addEventListener('click', () => {
+                closeAuthModal();
             });
 
             btnToggleSound.addEventListener('click', () => {
@@ -1429,9 +1579,9 @@ require_once __DIR__ . '/config/db.php';
                 soundIcon.textContent = active ? '🔊' : '🔇';
             });
 
-            // Si es la primera visita y no hay usuario guardado, mostrar login sutilmente
-            if (!currentUser) {
-                setTimeout(() => openLoginModal(), 400);
+            // Si es primera visita y no hay token guardado, invitar a iniciar sesión
+            if (!authToken) {
+                setTimeout(() => openAuthModal('login'), 350);
             }
         });
     </script>
