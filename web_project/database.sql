@@ -9,6 +9,16 @@ CREATE DATABASE IF NOT EXISTS `game_portal_db`
 USE `game_portal_db`;
 
 -- -----------------------------------------------------------------------------
+-- Tabla de Usuarios
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(50) NOT NULL UNIQUE,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
 -- Tabla de Puntuaciones
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `players_scores` (

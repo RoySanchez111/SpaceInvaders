@@ -1,6 +1,6 @@
 <?php
 /**
- * Space Invaders - Juego Web
+ * Space Invaders - Juego Web con Inicio de Sesión y Récords
  */
 require_once __DIR__ . '/config/db.php';
 ?>
@@ -11,7 +11,7 @@ require_once __DIR__ . '/config/db.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders</title>
     
-    <!-- Tipografía moderna y amigable -->
+    <!-- Fuentes limpias -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -69,6 +69,8 @@ require_once __DIR__ . '/config/db.php';
             border: 1px solid var(--card-border);
             border-radius: 14px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .game-logo {
@@ -92,6 +94,34 @@ require_once __DIR__ . '/config/db.php';
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        /* BADGE DE USUARIO */
+        .user-badge {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: var(--accent-mint);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-switch-user {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0 4px;
+        }
+
+        .btn-switch-user:hover {
+            color: #fff;
         }
 
         .btn-header {
@@ -236,12 +266,12 @@ require_once __DIR__ . '/config/db.php';
         }
 
         /* =====================================================================
-           MODAL DE PUNTUACIONES (OCULTO POR DEFECTO CON DISPLAY: NONE)
+           MODALES (LOGIN & PUNTUACIONES)
            ===================================================================== */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(10, 12, 18, 0.8);
+            background: rgba(10, 12, 18, 0.85);
             backdrop-filter: blur(8px);
             display: none;
             align-items: center;
@@ -301,7 +331,38 @@ require_once __DIR__ . '/config/db.php';
             color: #fff;
         }
 
-        /* CAJA DE PUNTAJE */
+        /* MODAL DE LOGIN */
+        .login-intro {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .login-input:focus {
+            border-color: var(--accent-mint);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+        }
+
+        /* CAJA DE PUNTAJE TRAS PARTIDA */
         .score-banner {
             background: rgba(247, 178, 103, 0.1);
             border: 1px solid rgba(247, 178, 103, 0.3);
@@ -324,28 +385,6 @@ require_once __DIR__ . '/config/db.php';
             font-family: var(--font-pixel);
             font-size: 1.6rem;
             color: var(--accent-amber);
-        }
-
-        /* FORMULARIO DE NOMBRE */
-        .save-form {
-            display: flex;
-            gap: 8px;
-        }
-
-        .save-form input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-family: var(--font-main);
-            font-size: 0.95rem;
-            outline: none;
-        }
-
-        .save-form input:focus {
-            border-color: var(--accent-mint);
         }
 
         .toast-msg {
@@ -424,7 +463,7 @@ require_once __DIR__ . '/config/db.php';
 
     <div class="game-wrapper">
         
-        <!-- BARRA SUPERIOR (LIMPIA, SIN TEXTOS TÉCNICOS) -->
+        <!-- BARRA SUPERIOR -->
         <header class="header-bar">
             <div class="game-logo">
                 <span>👾</span>
@@ -432,6 +471,16 @@ require_once __DIR__ . '/config/db.php';
             </div>
 
             <div class="header-actions">
+                <!-- Identificación del Jugador -->
+                <div class="user-badge" id="userBadgeBox" style="display: none;">
+                    <span>👤</span>
+                    <span id="displayUsername">Jugador</span>
+                    <button type="button" class="btn-switch-user" id="btnSwitchUser" title="Cambiar de usuario">(Cambiar)</button>
+                </div>
+                <button type="button" class="btn-header" id="btnLoginOpen" style="display: none;">
+                    🔑 Iniciar Sesión
+                </button>
+
                 <button type="button" class="btn-header" id="btnToggleSound" title="Sonido">
                     <span id="soundIcon">🔊</span>
                 </button>
@@ -489,7 +538,32 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =========================================================================
-         MODAL // FIN DE PARTIDA Y TABLA DE POSICIONES
+         MODAL 1: LOGIN SENCILLO ANTES DE JUGAR
+         ========================================================================= -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>👾</span> Iniciar Sesión de Jugador
+                </div>
+                <button type="button" class="btn-close" id="btnCloseLogin">✕</button>
+            </div>
+
+            <p class="login-intro">
+                Ingresa tu nombre o apodo antes de empezar para que tus puntuaciones se guarden automáticamente en el ranking:
+            </p>
+
+            <form class="login-form" id="loginForm">
+                <input type="text" class="login-input" id="loginUsernameInput" placeholder="Tu nombre o apodo (ej. Alex)" maxlength="20" required autocomplete="off">
+                <button type="submit" class="btn-primary" id="btnLoginSubmit" style="width: 100%;">
+                    Entrar a Jugar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 2: FIN DE PARTIDA & TABLA DE PUNTUACIONES
          ========================================================================= -->
     <div class="modal-overlay" id="scoreModal">
         <div class="modal-dialog">
@@ -503,17 +577,12 @@ require_once __DIR__ . '/config/db.php';
 
             <!-- Resumen de puntuación tras jugar -->
             <div class="score-banner" id="scoreBannerBox">
-                <span class="score-banner-label">Puntuación de la Partida</span>
+                <span class="score-banner-label">Puntuación Final</span>
                 <span class="score-banner-value" id="finalScoreVal">0</span>
             </div>
 
-            <!-- Formulario simple de registro -->
-            <form class="save-form" id="saveScoreForm">
-                <input type="text" id="playerNameInput" placeholder="Ingresa tu nombre..." maxlength="20" required autocomplete="off">
-                <button type="submit" class="btn-primary" id="btnSaveSubmit">Guardar</button>
-            </form>
-
-            <div class="toast-msg" id="saveSuccessNotice" style="display: none;"></div>
+            <!-- Aviso de guardado automático -->
+            <div class="toast-msg" id="autoSavedNotice" style="display: none;"></div>
 
             <!-- Tabla de Récords -->
             <div class="table-section-title">Top 10 Jugadores</div>
@@ -543,10 +612,9 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =========================================================================
-         MOTOR DE JUEGO (CORREGIDO EL BUG DEL ÚLTIMO INVASOR + TRANSICIÓN LIMPIA)
+         MOTOR DE JUEGO (SPACE INVADERS)
          ========================================================================= -->
     <script>
-        // EFECTOS DE SONIDO SIMPLES Y RETRO
         class SoundFX {
             constructor() {
                 this.ctx = null;
@@ -616,7 +684,6 @@ require_once __DIR__ . '/config/db.php';
             }
         }
 
-        // MOTOR PRINCIPAL SPACE INVADERS
         class SpaceInvaders {
             constructor(canvasId, callbacks) {
                 this.canvas = document.getElementById(canvasId);
@@ -666,7 +733,13 @@ require_once __DIR__ . '/config/db.php';
                     if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
                         this.keys.shoot = true;
                         e.preventDefault();
-                        if (this.state === 'IDLE') this.start();
+                        if (this.state === 'IDLE') {
+                            if (this.callbacks.onRequestStart) {
+                                this.callbacks.onRequestStart();
+                            } else {
+                                this.start();
+                            }
+                        }
                     }
                     if (e.code === 'KeyP') this.togglePause();
                 });
@@ -679,7 +752,13 @@ require_once __DIR__ . '/config/db.php';
 
                 this.canvas.addEventListener('click', () => {
                     this.sound.init();
-                    if (this.state === 'IDLE') this.start();
+                    if (this.state === 'IDLE') {
+                        if (this.callbacks.onRequestStart) {
+                            this.callbacks.onRequestStart();
+                        } else {
+                            this.start();
+                        }
+                    }
                 });
             }
 
@@ -691,10 +770,10 @@ require_once __DIR__ . '/config/db.php';
                     for (let c = 0; c < cols; c++) {
                         let type = 'bottom';
                         let pts = 10;
-                        let color = '#38bdf8'; // Celeste suave
+                        let color = '#38bdf8';
 
-                        if (r === 0) { type = 'top'; pts = 30; color = '#ff5c5c'; } // Coral
-                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#f7b267'; } // Ámbar
+                        if (r === 0) { type = 'top'; pts = 30; color = '#ff5c5c'; }
+                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#f7b267'; }
 
                         this.aliens.push({
                             x: 64 + c * 48,
@@ -805,7 +884,7 @@ require_once __DIR__ . '/config/db.php';
                     this.sound.laser();
                 }
 
-                // 3. Proyectiles (SEGURO: SIN MUTAR EL ARRAY INCONSISTENTEMENTE)
+                // 3. Proyectiles
                 let allAliensKilled = false;
 
                 for (let i = this.bullets.length - 1; i >= 0; i--) {
@@ -848,7 +927,6 @@ require_once __DIR__ . '/config/db.php';
                             const remaining = this.aliens.filter(x => x.alive).length;
                             this.alienSpeed = Math.min(4.5, 0.8 + (this.level * 0.2) + ((32 - remaining) * 0.08));
 
-                            // ¿Murió el último personaje?
                             if (remaining === 0) {
                                 allAliensKilled = true;
                             }
@@ -859,12 +937,11 @@ require_once __DIR__ . '/config/db.php';
                     if (allAliensKilled) break;
                 }
 
-                // SI SE LIMPIÓ LA OLEADA: Transición suave sin trabarse
                 if (allAliensKilled) {
                     this.bullets = [];
                     this.bombs = [];
                     this.state = 'LEVEL_CLEAR';
-                    this.levelClearTimer = 50; // ~0.8 segundos de pausa celebratoria
+                    this.levelClearTimer = 50;
                     return;
                 }
 
@@ -954,11 +1031,10 @@ require_once __DIR__ . '/config/db.php';
             }
 
             render() {
-                // Fondo oscuro limpio y suave
                 this.ctx.fillStyle = '#080a10';
                 this.ctx.fillRect(0, 0, this.width, this.height);
 
-                // Estrellas sutiles
+                // Estrellas
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
                 for (let s = 0; s < 30; s++) {
                     const sx = (s * 89) % this.width;
@@ -966,14 +1042,14 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.fillRect(sx, sy, 2, 2);
                 }
 
-                // Bunkers (verde menta suave)
+                // Bunkers
                 for (const bk of this.bunkers) {
                     const alpha = bk.hp === 3 ? 0.9 : (bk.hp === 2 ? 0.6 : 0.35);
                     this.ctx.fillStyle = `rgba(52, 211, 153, ${alpha})`;
                     this.ctx.fillRect(bk.x, bk.y, bk.w, bk.h);
                 }
 
-                // Invasores (colores amigables y animación clásica de 2 pasos)
+                // Invasores
                 const step = Math.floor(Date.now() / 400) % 2;
                 for (const a of this.aliens) {
                     if (!a.alive) continue;
@@ -1004,15 +1080,15 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.fillRect(a.x + a.w - 11, a.y + 6, 3, 3);
                 }
 
-                // Proyectiles jugador (celeste brillante)
+                // Proyectiles
                 this.ctx.fillStyle = '#38bdf8';
                 for (const b of this.bullets) this.ctx.fillRect(b.x, b.y, b.w, b.h);
 
-                // Bombas alien (coral)
+                // Bombas alien
                 this.ctx.fillStyle = '#ff5c5c';
                 for (const bm of this.bombs) this.ctx.fillRect(bm.x, bm.y, bm.w, bm.h);
 
-                // Cañón del Jugador (verde menta suave)
+                // Cañón
                 if (!this.player.isHit || Math.floor(Date.now() / 80) % 2 === 0) {
                     this.ctx.fillStyle = '#34d399';
                     const x = this.player.x, y = this.player.y, w = this.player.w, h = this.player.h;
@@ -1028,7 +1104,7 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.fill();
                 }
 
-                // Línea inferior de defensa
+                // Línea inferior
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
@@ -1036,7 +1112,7 @@ require_once __DIR__ . '/config/db.php';
                 this.ctx.lineTo(this.width - 10, this.height - 14);
                 this.ctx.stroke();
 
-                // Cartel de Nivel Superado
+                // Nivel superado
                 if (this.state === 'LEVEL_CLEAR') {
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
@@ -1050,7 +1126,7 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.textAlign = 'left';
                 }
 
-                // Pantalla Pausa
+                // Pausa
                 if (this.state === 'PAUSED') {
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
@@ -1060,11 +1136,11 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.fillText('JUEGO EN PAUSA', this.width / 2, this.height / 2 - 10);
                     this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
                     this.ctx.fillStyle = '#94a3b8';
-                    this.ctx.fillText('Presiona P para continuar jugando', this.width / 2, this.height / 2 + 20);
+                    this.ctx.fillText('Presiona P para continuar', this.width / 2, this.height / 2 + 20);
                     this.ctx.textAlign = 'left';
                 }
 
-                // Pantalla Inicial
+                // Inicial
                 if (this.state === 'IDLE') {
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
@@ -1099,7 +1175,7 @@ require_once __DIR__ . '/config/db.php';
         }
 
         // =====================================================================
-        // CONTROLADOR DE PÁGINA
+        // CONTROLADOR DE PÁGINA, LOGIN Y GUARDADO AUTOMÁTICO
         // =====================================================================
         document.addEventListener('DOMContentLoaded', () => {
             const hudScore       = document.getElementById('hudScore');
@@ -1112,23 +1188,88 @@ require_once __DIR__ . '/config/db.php';
             const btnToggleSound = document.getElementById('btnToggleSound');
             const soundIcon      = document.getElementById('soundIcon');
 
+            // Elementos de Usuario
+            const userBadgeBox       = document.getElementById('userBadgeBox');
+            const displayUsername    = document.getElementById('displayUsername');
+            const btnSwitchUser      = document.getElementById('btnSwitchUser');
+            const btnLoginOpen       = document.getElementById('btnLoginOpen');
+
+            // Modal Login
+            const loginModal         = document.getElementById('loginModal');
+            const loginForm          = document.getElementById('loginForm');
+            const loginUsernameInput = document.getElementById('loginUsernameInput');
+            const btnCloseLogin      = document.getElementById('btnCloseLogin');
+
+            // Modal Récords
             const scoreModal       = document.getElementById('scoreModal');
             const modalHeading     = document.getElementById('modalHeading');
             const scoreBannerBox   = document.getElementById('scoreBannerBox');
             const finalScoreVal    = document.getElementById('finalScoreVal');
-            const saveScoreForm    = document.getElementById('saveScoreForm');
-            const playerNameInput  = document.getElementById('playerNameInput');
-            const btnSaveSubmit    = document.getElementById('btnSaveSubmit');
-            const saveSuccessNotice= document.getElementById('saveSuccessNotice');
+            const autoSavedNotice  = document.getElementById('autoSavedNotice');
             const scoresBody       = document.getElementById('scoresBody');
             const btnPlayAgain     = document.getElementById('btnPlayAgain');
             const btnCloseModal    = document.getElementById('btnCloseModal');
 
+            let currentUser = localStorage.getItem('si_player_name') || '';
             let currentScore = 0;
             let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
             hudHiScore.textContent = record.toLocaleString();
 
+            // Sincronizar estado visual del usuario
+            function syncUserUI() {
+                if (currentUser) {
+                    displayUsername.textContent = currentUser;
+                    userBadgeBox.style.display = 'flex';
+                    btnLoginOpen.style.display = 'none';
+                } else {
+                    userBadgeBox.style.display = 'none';
+                    btnLoginOpen.style.display = 'inline-flex';
+                }
+            }
+            syncUserUI();
+
+            // Abrir Modal de Login
+            function openLoginModal() {
+                loginUsernameInput.value = currentUser || '';
+                loginModal.classList.add('active');
+                setTimeout(() => loginUsernameInput.focus(), 100);
+            }
+
+            function closeLoginModal() {
+                loginModal.classList.remove('active');
+            }
+
+            // Guardar usuario al enviar formulario de login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = loginUsernameInput.value.trim();
+                if (!name) return;
+
+                currentUser = name;
+                localStorage.setItem('si_player_name', currentUser);
+                syncUserUI();
+                closeLoginModal();
+
+                // Notificar a la API
+                try {
+                    await fetch('api.php?action=login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: currentUser })
+                    });
+                } catch(e) {}
+            });
+
+            // Manejador del juego
             const game = new SpaceInvaders('gameCanvas', {
+                onRequestStart: () => {
+                    // Si el usuario aún no ha iniciado sesión, pedirle que lo haga primero
+                    if (!currentUser) {
+                        openLoginModal();
+                    } else {
+                        game.start();
+                    }
+                },
                 onScoreUpdate: (score, lives, level) => {
                     currentScore = score;
                     hudScore.textContent = score.toLocaleString();
@@ -1144,38 +1285,60 @@ require_once __DIR__ . '/config/db.php';
                         hudHiScore.textContent = record.toLocaleString();
                     }
                 },
-                onGameOver: (score) => {
+                onGameOver: async (score) => {
                     currentScore = score;
-                    openModal(true);
+                    // Abrir pantalla de Game Over y subir puntuación automáticamente
+                    await handleGameOver(score);
                 }
             });
 
-            async function openModal(isGameOver = false) {
-                saveSuccessNotice.style.display = 'none';
+            // GESTIÓN DE GAME OVER Y SUBIDA AUTOMÁTICA
+            async function handleGameOver(score) {
+                modalHeading.innerHTML = '<span>👾</span> ¡Partida Terminada!';
+                scoreBannerBox.style.display = 'flex';
+                finalScoreVal.textContent = score.toLocaleString();
+                autoSavedNotice.style.display = 'none';
 
-                if (isGameOver) {
-                    modalHeading.innerHTML = '<span>👾</span> ¡Partida Terminada!';
-                    scoreBannerBox.style.display = 'flex';
-                    finalScoreVal.textContent = currentScore.toLocaleString();
-                    saveScoreForm.style.display = 'flex';
-                    playerNameInput.value = '';
-                    playerNameInput.focus();
-                } else {
-                    modalHeading.innerHTML = '<span>🏆</span> Mejores Puntuaciones';
-                    scoreBannerBox.style.display = 'none';
-                    saveScoreForm.style.display = 'none';
+                scoreModal.classList.add('active');
+
+                // Si hay usuario logueado y el puntaje es > 0, subirlo automáticamente
+                if (currentUser && score > 0) {
+                    try {
+                        const res = await fetch('api.php?action=submit_score', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: currentUser, score: score })
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            autoSavedNotice.innerHTML = `✅ ¡Puntuación guardada para <strong>${escapeHtml(currentUser)}</strong>! (Posición #${json.data.rank})`;
+                            autoSavedNotice.style.display = 'block';
+                        }
+                    } catch(err) {
+                        console.error('Error al subir puntuación:', err);
+                    }
+                } else if (!currentUser) {
+                    autoSavedNotice.innerHTML = `💡 Inicia sesión para que tus puntuaciones se guarden automáticamente.`;
+                    autoSavedNotice.style.display = 'block';
                 }
 
+                await fetchLeaderboard();
+            }
+
+            async function openLeaderboardModal() {
+                modalHeading.innerHTML = '<span>🏆</span> Mejores Puntuaciones';
+                scoreBannerBox.style.display = 'none';
+                autoSavedNotice.style.display = 'none';
                 scoreModal.classList.add('active');
                 await fetchLeaderboard();
             }
 
-            function closeModal() {
+            function closeScoreModal() {
                 scoreModal.classList.remove('active');
             }
 
             async function fetchLeaderboard() {
-                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando puntuaciones...</td></tr>`;
+                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando...</td></tr>`;
 
                 try {
                     const res = await fetch('api.php?action=leaderboard');
@@ -1205,10 +1368,13 @@ require_once __DIR__ . '/config/db.php';
                     else if (s.rank === 2) { pos = '🥈 2'; rowClass = 'top-2'; }
                     else if (s.rank === 3) { pos = '🥉 3'; rowClass = 'top-3'; }
 
+                    const isCurrent = currentUser && s.username.toLowerCase() === currentUser.toLowerCase();
+                    const highlightStyle = isCurrent ? 'style="background: rgba(56, 189, 248, 0.1);"' : '';
+
                     html += `
-                        <tr class="${rowClass}">
+                        <tr class="${rowClass}" ${highlightStyle}>
                             <td class="col-pos">${pos}</td>
-                            <td class="col-name">${escapeHtml(s.username)}</td>
+                            <td class="col-name">${escapeHtml(s.username)} ${isCurrent ? '⭐' : ''}</td>
                             <td class="col-pts">${Number(s.score).toLocaleString()}</td>
                             <td class="col-time">${escapeHtml(s.date || '')}</td>
                         </tr>
@@ -1223,60 +1389,50 @@ require_once __DIR__ . '/config/db.php';
                 return el.innerHTML;
             }
 
-            saveScoreForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const username = playerNameInput.value.trim();
-                if (!username) return;
-
-                btnSaveSubmit.disabled = true;
-                btnSaveSubmit.textContent = 'Guardando...';
-
-                try {
-                    const res = await fetch('api.php?action=submit_score', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, score: currentScore })
-                    });
-                    const json = await res.json();
-
-                    if (json.success) {
-                        saveSuccessNotice.textContent = `¡Récord guardado con éxito! Posición #${json.data.rank}`;
-                        saveSuccessNotice.style.display = 'block';
-                        saveScoreForm.style.display = 'none';
-                        await fetchLeaderboard();
-                    } else {
-                        alert(json.message || 'Error al guardar');
-                    }
-                } catch(err) {
-                    alert('Error al guardar la puntuación');
-                } finally {
-                    btnSaveSubmit.disabled = false;
-                    btnSaveSubmit.textContent = 'Guardar';
+            // Eventos de botones
+            btnPlayGame.addEventListener('click', () => {
+                if (!currentUser) {
+                    openLoginModal();
+                } else {
+                    closeScoreModal();
+                    game.start();
                 }
             });
 
-            btnPlayGame.addEventListener('click', () => {
-                closeModal();
-                game.start();
-            });
-
             btnPlayAgain.addEventListener('click', () => {
-                closeModal();
+                closeScoreModal();
                 game.start();
             });
 
             btnShowScores.addEventListener('click', () => {
-                openModal(false);
+                openLeaderboardModal();
             });
 
             btnCloseModal.addEventListener('click', () => {
-                closeModal();
+                closeScoreModal();
+            });
+
+            btnLoginOpen.addEventListener('click', () => {
+                openLoginModal();
+            });
+
+            btnSwitchUser.addEventListener('click', () => {
+                openLoginModal();
+            });
+
+            btnCloseLogin.addEventListener('click', () => {
+                closeLoginModal();
             });
 
             btnToggleSound.addEventListener('click', () => {
                 const active = game.sound.toggle();
                 soundIcon.textContent = active ? '🔊' : '🔇';
             });
+
+            // Si es la primera visita y no hay usuario guardado, mostrar login sutilmente
+            if (!currentUser) {
+                setTimeout(() => openLoginModal(), 400);
+            }
         });
     </script>
 </body>
