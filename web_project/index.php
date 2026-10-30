@@ -1,16 +1,8 @@
 <?php
 /**
- * Space Invaders - Arcade Clásico Web
- * Stack: NGINX + PHP 8.5 (FPM) + MariaDB + phpMyAdmin
+ * Space Invaders - Juego Web
  */
-
 require_once __DIR__ . '/config/db.php';
-
-$pdo = getDatabaseConnection();
-$dbConnected = ($pdo !== null);
-
-$serverHostname = gethostname() ?: 'srv2112995';
-$phpVersion     = PHP_VERSION;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -19,25 +11,24 @@ $phpVersion     = PHP_VERSION;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders</title>
     
-    <!-- Fuentes de Google: Press Start 2P (Retro) y Rajdhani (UI limpia) -->
+    <!-- Tipografía moderna y amigable -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
 
-    <!-- ESTILOS EMBEBIDOS Y AUTOSUFICIENTES (CERO DEPENDENCIAS EXTERNAS QUE PUEDAN FALLAR) -->
     <style>
         :root {
-            --bg-body: #0a0b12;
-            --bg-card: rgba(18, 20, 32, 0.95);
-            --border-card: rgba(255, 255, 255, 0.12);
-            --neon-crimson: #ff0055;
-            --neon-gold: #ffb703;
-            --neon-cyan: #00f5d4;
-            --neon-green: #39ff14;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --font-arcade: 'Press Start 2P', monospace, sans-serif;
-            --font-ui: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --bg-color: #0e111a;
+            --card-bg: #161b26;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-coral: #ff5c5c;
+            --accent-amber: #f7b267;
+            --accent-mint: #38bdf8;
+            --accent-green: #34d399;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-pixel: 'Press Start 2P', monospace;
         }
 
         * {
@@ -47,185 +38,144 @@ $phpVersion     = PHP_VERSION;
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: var(--font-ui);
-            font-size: 16px;
-            line-height: 1.4;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 16px;
+            align-items: center;
+            padding: 20px;
             background-image: 
-                radial-gradient(circle at 50% 10%, rgba(255, 0, 85, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 90%, rgba(0, 245, 212, 0.1) 0%, transparent 45%);
-            background-attachment: fixed;
+                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(255, 92, 92, 0.05) 0%, transparent 50%);
         }
 
-        .arcade-cabinet {
+        .game-wrapper {
             width: 100%;
-            max-width: 720px;
+            max-width: 680px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            margin: 0 auto;
+            gap: 14px;
         }
 
-        /* BARRA SUPERIOR (HEADER) */
-        .top-navbar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-card);
-            border-radius: 12px;
-            padding: 12px 20px;
+        /* BARRA SUPERIOR */
+        .header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 12px 18px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
         }
 
-        .brand-title {
+        .game-logo {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .brand-title h1 {
-            font-family: var(--font-arcade);
-            font-size: 1.15rem;
-            color: var(--neon-crimson);
-            text-shadow: 0 0 10px rgba(255, 0, 85, 0.6);
-            letter-spacing: 1px;
+        .game-logo span {
+            font-size: 1.5rem;
         }
 
-        .brand-icon {
-            font-size: 1.6rem;
-            animation: alienFloat 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes alienFloat {
-            from { transform: translateY(-2px); }
-            to { transform: translateY(2px); }
-        }
-
-        .server-pills {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            font-size: 0.82rem;
-        }
-
-        .pill {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 5px 10px;
-            border-radius: 6px;
-            color: var(--text-dim);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .pill strong {
+        .game-logo h1 {
+            font-family: var(--font-pixel);
+            font-size: 0.95rem;
             color: #fff;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .status-dot.online {
-            background: #2ec4b6;
-            box-shadow: 0 0 8px #2ec4b6;
-        }
-
-        .status-dot.offline {
-            background: var(--neon-crimson);
-            box-shadow: 0 0 8px var(--neon-crimson);
-        }
-
-        .btn-phpmyadmin {
-            background: rgba(255, 183, 3, 0.1);
-            color: var(--neon-gold);
-            border: 1px solid rgba(255, 183, 3, 0.5);
-            padding: 5px 12px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-
-        .btn-phpmyadmin:hover {
-            background: var(--neon-gold);
-            color: #000;
-            box-shadow: 0 0 12px rgba(255, 183, 3, 0.6);
-        }
-
-        /* ÁREA PRINCIPAL DEL JUEGO */
-        .game-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-card);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-        }
-
-        /* HUD SUPERIOR DEL JUEGO */
-        .arcade-hud {
-            width: 100%;
-            max-width: 640px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-family: var(--font-arcade);
-            text-align: center;
-        }
-
-        .hud-box {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .hud-title {
-            font-size: 0.65rem;
-            color: var(--text-dim);
             letter-spacing: 0.5px;
         }
 
-        .hud-value {
-            font-size: 1rem;
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .arcade-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        /* HUD PUNTUACIÓN Y VIDAS */
+        .stats-bar {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-family: var(--font-pixel);
+            font-size: 0.95rem;
             color: #fff;
         }
 
-        .hud-value.gold { color: var(--neon-gold); text-shadow: 0 0 8px rgba(255, 183, 3, 0.5); }
-        .hud-value.cyan { color: var(--neon-cyan); text-shadow: 0 0 8px rgba(0, 245, 212, 0.5); }
-        .hud-value.lives-icons { font-family: sans-serif; font-size: 0.95rem; }
+        .stat-number.amber { color: var(--accent-amber); }
+        .stat-number.mint { color: var(--accent-mint); }
+        .stat-number.lives { font-family: sans-serif; font-size: 0.9rem; }
 
-        /* CONTENEDOR DEL CANVAS */
-        .canvas-frame {
+        /* PANTALLA CANVAS */
+        .canvas-container {
             width: 100%;
             max-width: 640px;
             aspect-ratio: 4 / 3;
-            background: #000;
-            border-radius: 10px;
+            background: #080a10;
+            border-radius: 12px;
             overflow: hidden;
-            border: 2px solid rgba(0, 245, 212, 0.4);
-            box-shadow: 0 0 25px rgba(0, 245, 212, 0.2), inset 0 0 40px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             position: relative;
         }
 
@@ -236,175 +186,126 @@ $phpVersion     = PHP_VERSION;
             cursor: pointer;
         }
 
-        /* CONTROLES Y BOTONES INFERIORES */
-        .controls-deck {
+        /* PIE DE CONTROLES */
+        .controls-footer {
             width: 100%;
-            max-width: 640px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
+            padding-top: 4px;
         }
 
-        .keys-hint {
+        .instructions {
             font-size: 0.85rem;
-            color: var(--text-dim);
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 6px;
-            flex-wrap: wrap;
         }
 
-        .key-tag {
-            background: rgba(255, 255, 255, 0.1);
+        .key {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.78rem;
             font-weight: 700;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        /* BOTONES DE ESTILO RETRO COOL */
-        .arcade-btn {
-            font-family: var(--font-ui);
+        .btn-primary {
+            background: var(--accent-coral);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 9px;
+            font-family: var(--font-main);
             font-size: 0.95rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: none;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);
         }
 
-        .btn-play {
-            background: var(--neon-crimson);
-            color: #fff;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
-        }
-
-        .btn-play:hover {
-            background: #ff226e;
-            box-shadow: 0 0 25px rgba(255, 0, 85, 0.8);
+        .btn-primary:hover {
+            background: #ff4747;
             transform: translateY(-2px);
-        }
-
-        .btn-scores {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-scores:hover {
-            background: rgba(255, 255, 255, 0.16);
-            border-color: var(--neon-gold);
-            color: var(--neon-gold);
-            transform: translateY(-2px);
-        }
-
-        .btn-audio {
-            background: rgba(0, 0, 0, 0.4);
-            color: var(--text-dim);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 14px;
-        }
-
-        .btn-audio:hover {
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 16px rgba(255, 92, 92, 0.4);
         }
 
         /* =====================================================================
-           MODAL DE PUNTUACIONES Y GAME OVER (OCULTO POR DEFECTO CON DISPLAY: NONE)
+           MODAL DE PUNTUACIONES (OCULTO POR DEFECTO CON DISPLAY: NONE)
            ===================================================================== */
-        .modal-screen-overlay {
+        .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            display: none; /* Crucial: no visible hasta activarse */
+            background: rgba(10, 12, 18, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 9999;
             padding: 16px;
-            animation: fadeIn 0.2s ease forwards;
         }
 
-        .modal-screen-overlay.active {
+        .modal-overlay.active {
             display: flex !important;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-card {
-            background: #11131d;
-            border: 1px solid rgba(255, 0, 85, 0.4);
-            border-radius: 14px;
-            max-width: 520px;
+        .modal-dialog {
+            background: #171c28;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            max-width: 480px;
             width: 100%;
             padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 0, 85, 0.2);
-            animation: scaleIn 0.25s ease forwards;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            animation: popIn 0.2s ease forwards;
         }
 
-        @keyframes scaleIn {
-            from { transform: scale(0.92); opacity: 0; }
+        @keyframes popIn {
+            from { transform: scale(0.94); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
 
-        .modal-top {
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 12px;
         }
 
-        .modal-headline {
-            font-family: var(--font-arcade);
-            font-size: 1.1rem;
-            color: var(--neon-crimson);
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .close-icon-btn {
+        .btn-close {
             background: none;
             border: none;
-            color: var(--text-dim);
-            font-size: 1.4rem;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
             cursor: pointer;
             line-height: 1;
         }
 
-        .close-icon-btn:hover {
+        .btn-close:hover {
             color: #fff;
         }
 
-        .score-callout {
-            background: rgba(255, 183, 3, 0.08);
-            border: 1px dashed var(--neon-gold);
-            border-radius: 10px;
+        /* CAJA DE PUNTAJE */
+        .score-banner {
+            background: rgba(247, 178, 103, 0.1);
+            border: 1px solid rgba(247, 178, 103, 0.3);
+            border-radius: 12px;
             padding: 14px;
             text-align: center;
             display: flex;
@@ -412,264 +313,212 @@ $phpVersion     = PHP_VERSION;
             gap: 4px;
         }
 
-        .score-callout-title {
-            font-size: 0.85rem;
-            color: var(--text-dim);
+        .score-banner-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
             text-transform: uppercase;
         }
 
-        .score-callout-points {
-            font-family: var(--font-arcade);
-            font-size: 1.8rem;
-            color: var(--neon-gold);
-            text-shadow: 0 0 12px rgba(255, 183, 3, 0.5);
+        .score-banner-value {
+            font-family: var(--font-pixel);
+            font-size: 1.6rem;
+            color: var(--accent-amber);
         }
 
+        /* FORMULARIO DE NOMBRE */
         .save-form {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .save-form input {
             flex: 1;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
             padding: 10px 14px;
             border-radius: 8px;
+            font-family: var(--font-main);
             font-size: 0.95rem;
             outline: none;
-            font-family: var(--font-ui);
-            font-weight: 600;
         }
 
         .save-form input:focus {
-            border-color: var(--neon-crimson);
-            box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+            border-color: var(--accent-mint);
         }
 
-        .status-alert {
-            background: rgba(46, 196, 182, 0.15);
-            color: #2ec4b6;
-            border: 1px solid rgba(46, 196, 182, 0.4);
+        .toast-msg {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(52, 211, 153, 0.3);
             padding: 10px;
             border-radius: 8px;
-            text-align: center;
-            font-weight: 700;
             font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
         }
 
-        .leaderboard-title {
-            font-family: var(--font-ui);
-            font-size: 1rem;
+        /* TABLA DE POSICIONES */
+        .table-section-title {
+            font-size: 0.88rem;
             font-weight: 700;
-            color: var(--neon-gold);
+            color: var(--text-secondary);
+            text-transform: uppercase;
             letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 4px;
         }
 
-        .leaderboard-table-box {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .scores-table-container {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
             overflow: hidden;
-            max-height: 250px;
+            max-height: 220px;
             overflow-y: auto;
         }
 
-        .scores-table {
+        .clean-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
         }
 
-        .scores-table th {
-            background: rgba(0, 0, 0, 0.6);
+        .clean-table th {
+            background: rgba(0, 0, 0, 0.3);
             padding: 8px 12px;
             text-align: left;
-            color: var(--text-dim);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
             font-weight: 700;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .scores-table td {
+        .clean-table td {
             padding: 8px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
 
-        .scores-table .col-rank { width: 45px; font-weight: 700; }
-        .scores-table .col-pts { text-align: right; color: var(--neon-gold); font-family: monospace; font-weight: 700; font-size: 1rem; }
-        .scores-table .col-date { text-align: right; color: var(--text-dim); font-size: 0.78rem; width: 130px; }
+        .clean-table .col-pos { width: 45px; font-weight: 700; color: var(--text-secondary); }
+        .clean-table .col-pts { text-align: right; font-family: monospace; font-weight: 700; color: var(--accent-amber); }
+        .clean-table .col-time { text-align: right; color: var(--text-secondary); font-size: 0.78rem; width: 120px; }
 
-        .scores-table tr.rank-1 td.col-user { color: var(--neon-gold); font-weight: 700; }
-        .scores-table tr.rank-2 td.col-user { color: #cbd5e1; font-weight: 700; }
-        .scores-table tr.rank-3 td.col-user { color: var(--neon-crimson); font-weight: 700; }
+        .clean-table tr.top-1 td.col-name { color: var(--accent-amber); font-weight: 700; }
+        .clean-table tr.top-2 td.col-name { color: #e2e8f0; font-weight: 700; }
+        .clean-table tr.top-3 td.col-name { color: var(--accent-coral); font-weight: 700; }
 
-        .modal-bottom {
+        .modal-footer {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding-top: 14px;
+            padding-top: 8px;
         }
 
-        /* PIE DE PÁGINA */
-        .bottom-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 16px;
-            font-size: 0.82rem;
-            color: var(--text-dim);
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .bottom-footer a {
-            color: var(--neon-gold);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .bottom-footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 650px) {
-            .arcade-hud {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .controls-deck {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .action-buttons {
-                justify-content: center;
-            }
+        @media (max-width: 600px) {
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .controls-footer { flex-direction: column; align-items: stretch; }
+            .btn-primary { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <div class="arcade-cabinet">
+    <div class="game-wrapper">
         
-        <!-- ENCABEZADO SUPERIOR -->
-        <header class="top-navbar">
-            <div class="brand-title">
-                <span class="brand-icon">👾</span>
+        <!-- BARRA SUPERIOR (LIMPIA, SIN TEXTOS TÉCNICOS) -->
+        <header class="header-bar">
+            <div class="game-logo">
+                <span>👾</span>
                 <h1>SPACE INVADERS</h1>
             </div>
 
-            <div class="server-pills">
-                <div class="pill">Host: <strong><?= htmlspecialchars($serverHostname, ENT_QUOTES, 'UTF-8') ?></strong></div>
-                <div class="pill">PHP: <strong><?= htmlspecialchars($phpVersion, ENT_QUOTES, 'UTF-8') ?></strong></div>
-                <div class="pill">
-                    <span class="status-dot <?= $dbConnected ? 'online' : 'offline' ?>" id="dbDot"></span>
-                    BD: <strong id="dbText"><?= $dbConnected ? 'Conectada' : 'Desconectada' ?></strong>
-                </div>
-                <a href="/phpmyadmin/" target="_blank" rel="noopener noreferrer" class="btn-phpmyadmin" title="Abrir phpMyAdmin">
-                    phpMyAdmin
-                </a>
+            <div class="header-actions">
+                <button type="button" class="btn-header" id="btnToggleSound" title="Sonido">
+                    <span id="soundIcon">🔊</span>
+                </button>
+                <button type="button" class="btn-header" id="btnShowScores">
+                    🏆 Puntuaciones
+                </button>
             </div>
         </header>
 
-        <!-- TARJETA PRINCIPAL DEL JUEGO -->
-        <main class="game-card">
+        <!-- TARJETA DEL JUEGO -->
+        <main class="arcade-card">
             
-            <!-- HUD TELEMETRÍA DEL JUEGO -->
-            <div class="arcade-hud">
-                <div class="hud-box">
-                    <span class="hud-title">PUNTOS</span>
-                    <span class="hud-value" id="hudScore">0</span>
+            <!-- MARCADOR -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-label">Puntos</span>
+                    <span class="stat-number" id="hudScore">0</span>
                 </div>
-                <div class="hud-box">
-                    <span class="hud-title">RÉCORD</span>
-                    <span class="hud-value gold" id="hudHiScore">0</span>
+                <div class="stat-item">
+                    <span class="stat-label">Récord</span>
+                    <span class="stat-number amber" id="hudHiScore">0</span>
                 </div>
-                <div class="hud-box">
-                    <span class="hud-title">VIDAS</span>
-                    <span class="hud-value lives-icons" id="hudLives">🚀 🚀 🚀</span>
+                <div class="stat-item">
+                    <span class="stat-label">Vidas</span>
+                    <span class="stat-number lives" id="hudLives">🚀 🚀 🚀</span>
                 </div>
-                <div class="hud-box">
-                    <span class="hud-title">NIVEL</span>
-                    <span class="hud-value cyan" id="hudLevel">01</span>
+                <div class="stat-item">
+                    <span class="stat-label">Nivel</span>
+                    <span class="stat-number mint" id="hudLevel">1</span>
                 </div>
             </div>
 
-            <!-- PANTALLA CANVAS RETRO -->
-            <div class="canvas-frame">
+            <!-- PANTALLA CANVAS -->
+            <div class="canvas-container">
                 <canvas id="gameCanvas" width="640" height="480"></canvas>
             </div>
 
-            <!-- CONTROLES Y GUÍA -->
-            <div class="controls-deck">
-                <div class="keys-hint">
-                    <span class="key-tag">← →</span> o <span class="key-tag">A D</span> Moverse
+            <!-- CONTROLES -->
+            <div class="controls-footer">
+                <div class="instructions">
+                    <span class="key">← →</span> o <span class="key">A D</span> Moverse
                     <span>•</span>
-                    <span class="key-tag">ESPACIO</span> Disparar
+                    <span class="key">Espacio</span> Disparar
                     <span>•</span>
-                    <span class="key-tag">P</span> Pausa
+                    <span class="key">P</span> Pausa
                 </div>
 
-                <div class="action-buttons">
-                    <button type="button" class="arcade-btn btn-play" id="btnStartGame">
-                        ▶ JUGAR AHORA
-                    </button>
-                    <button type="button" class="arcade-btn btn-scores" id="btnOpenScores">
-                        🏆 RÉCORDS
-                    </button>
-                    <button type="button" class="arcade-btn btn-audio" id="btnAudioToggle" title="Activar/Silenciar sonido">
-                        🔊
-                    </button>
-                </div>
+                <button type="button" class="btn-primary" id="btnPlayGame">
+                    Jugar Partida
+                </button>
             </div>
 
         </main>
 
-        <!-- PIE DE PÁGINA -->
-        <footer class="bottom-footer">
-            <span>Servidor Web: <strong>NGINX</strong> + <strong>PHP <?= htmlspecialchars($phpVersion, ENT_QUOTES, 'UTF-8') ?> FPM</strong> + <strong>MariaDB</strong></span>
-            <a href="/phpmyadmin/" target="_blank" rel="noopener noreferrer">Administrar Base de Datos &rarr;</a>
-        </footer>
-
     </div>
 
     <!-- =========================================================================
-         VENTANA MODAL // GAME OVER Y TABLA DE MEJORES PUNTUACIONES
+         MODAL // FIN DE PARTIDA Y TABLA DE POSICIONES
          ========================================================================= -->
-    <div class="modal-screen-overlay" id="scoreModal">
-        <div class="modal-card">
+    <div class="modal-overlay" id="scoreModal">
+        <div class="modal-dialog">
             
-            <div class="modal-top">
-                <div class="modal-headline" id="modalHeading">
-                    <span>👾</span> ¡FIN DEL JUEGO!
+            <div class="modal-header">
+                <div class="modal-title" id="modalHeading">
+                    <span>🏆</span> Tabla de Puntuaciones
                 </div>
-                <button type="button" class="close-icon-btn" id="btnCloseModal" title="Cerrar ventana">✕</button>
+                <button type="button" class="btn-close" id="btnCloseModal">✕</button>
             </div>
 
-            <!-- Puntaje obtenido en la partida -->
-            <div class="score-callout" id="calloutScoreBox">
-                <span class="score-callout-title">Puntuación Final</span>
-                <span class="score-callout-points" id="finalScoreDisplay">0</span>
+            <!-- Resumen de puntuación tras jugar -->
+            <div class="score-banner" id="scoreBannerBox">
+                <span class="score-banner-label">Puntuación de la Partida</span>
+                <span class="score-banner-value" id="finalScoreVal">0</span>
             </div>
 
-            <!-- Formulario para ingresar nombre y registrar récord -->
+            <!-- Formulario simple de registro -->
             <form class="save-form" id="saveScoreForm">
-                <input type="text" id="playerNameInput" placeholder="Escribe tu nombre o apodo..." maxlength="20" required autocomplete="off">
-                <button type="submit" class="arcade-btn btn-play" id="btnSubmitScore">Guardar</button>
+                <input type="text" id="playerNameInput" placeholder="Ingresa tu nombre..." maxlength="20" required autocomplete="off">
+                <button type="submit" class="btn-primary" id="btnSaveSubmit">Guardar</button>
             </form>
 
-            <div class="status-alert" id="saveSuccessAlert" style="display: none;"></div>
+            <div class="toast-msg" id="saveSuccessNotice" style="display: none;"></div>
 
-            <!-- Tabla de Mejores Puntuaciones -->
-            <div class="leaderboard-title">
-                <span>🏆</span> TOP 10 MEJORES PUNTUACIONES
-            </div>
-
-            <div class="leaderboard-table-box">
-                <table class="scores-table">
+            <!-- Tabla de Récords -->
+            <div class="table-section-title">Top 10 Jugadores</div>
+            <div class="scores-table-container">
+                <table class="clean-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -678,15 +527,15 @@ $phpVersion     = PHP_VERSION;
                             <th style="text-align: right;">Fecha</th>
                         </tr>
                     </thead>
-                    <tbody id="scoresListBody">
-                        <tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-dim);">Cargando puntuaciones...</td></tr>
+                    <tbody id="scoresBody">
+                        <tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando...</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="modal-bottom">
-                <button type="button" class="arcade-btn btn-play" id="btnRestartGame">
-                    🔄 JUGAR OTRA VEZ
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" id="btnPlayAgain">
+                    Jugar de Nuevo
                 </button>
             </div>
 
@@ -694,14 +543,14 @@ $phpVersion     = PHP_VERSION;
     </div>
 
     <!-- =========================================================================
-         LÓGICA DEL JUEGO Y CONTROLADOR EMBEBIDO (GARANTIZA FUNCIONAMIENTO TOTAL)
+         MOTOR DE JUEGO (CORREGIDO EL BUG DEL ÚLTIMO INVASOR + TRANSICIÓN LIMPIA)
          ========================================================================= -->
     <script>
-        // SINTETIZADOR DE AUDIO RETRO (Web Audio API)
-        class RetroAudioEngine {
+        // EFECTOS DE SONIDO SIMPLES Y RETRO
+        class SoundFX {
             constructor() {
                 this.ctx = null;
-                this.enabled = true;
+                this.muted = false;
             }
             init() {
                 if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
@@ -713,18 +562,18 @@ $phpVersion     = PHP_VERSION;
                 }
             }
             toggle() {
-                this.enabled = !this.enabled;
-                return this.enabled;
+                this.muted = !this.muted;
+                return !this.muted;
             }
-            shoot() {
-                if (!this.enabled || !this.ctx) return;
+            laser() {
+                if (this.muted || !this.ctx) return;
                 try {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(140, this.ctx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
@@ -732,24 +581,24 @@ $phpVersion     = PHP_VERSION;
                     osc.stop(this.ctx.currentTime + 0.08);
                 } catch(e){}
             }
-            kill() {
-                if (!this.enabled || !this.ctx) return;
+            pop() {
+                if (this.muted || !this.ctx) return;
                 try {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = 'sawtooth';
+                    osc.type = 'triangle';
                     osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.14);
-                    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+                    osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start();
-                    osc.stop(this.ctx.currentTime + 0.14);
+                    osc.stop(this.ctx.currentTime + 0.12);
                 } catch(e){}
             }
-            hit() {
-                if (!this.enabled || !this.ctx) return;
+            boom() {
+                if (this.muted || !this.ctx) return;
                 try {
                     const dur = 0.25;
                     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
@@ -758,7 +607,7 @@ $phpVersion     = PHP_VERSION;
                     const noise = this.ctx.createBufferSource();
                     noise.buffer = buf;
                     const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
                     noise.connect(gain);
                     gain.connect(this.ctx.destination);
@@ -768,11 +617,11 @@ $phpVersion     = PHP_VERSION;
         }
 
         // MOTOR PRINCIPAL SPACE INVADERS
-        class RetroSpaceInvaders {
+        class SpaceInvaders {
             constructor(canvasId, callbacks) {
                 this.canvas = document.getElementById(canvasId);
                 this.ctx = this.canvas.getContext('2d');
-                this.audio = new RetroAudioEngine();
+                this.sound = new SoundFX();
                 this.callbacks = callbacks || {};
 
                 this.width = this.canvas.width;
@@ -781,13 +630,14 @@ $phpVersion     = PHP_VERSION;
                 this.score = 0;
                 this.lives = 3;
                 this.level = 1;
-                this.state = 'IDLE'; // IDLE, PLAYING, PAUSED, GAMEOVER
+                this.state = 'IDLE'; // IDLE, PLAYING, PAUSED, LEVEL_CLEAR, GAMEOVER
+                this.levelClearTimer = 0;
 
                 this.player = {
                     w: 36,
-                    h: 20,
+                    h: 18,
                     x: this.width / 2 - 18,
-                    y: this.height - 40,
+                    y: this.height - 38,
                     speed: 5.5,
                     isHit: false,
                     hitTimer: 0
@@ -804,12 +654,12 @@ $phpVersion     = PHP_VERSION;
 
                 this.keys = { left: false, right: false, shoot: false };
 
-                this.initListeners();
+                this.initControls();
                 this.reset();
                 this.render();
             }
 
-            initListeners() {
+            initControls() {
                 window.addEventListener('keydown', (e) => {
                     if (['ArrowLeft', 'KeyA'].includes(e.code)) { this.keys.left = true; e.preventDefault(); }
                     if (['ArrowRight', 'KeyD'].includes(e.code)) { this.keys.right = true; e.preventDefault(); }
@@ -828,7 +678,7 @@ $phpVersion     = PHP_VERSION;
                 });
 
                 this.canvas.addEventListener('click', () => {
-                    this.audio.init();
+                    this.sound.init();
                     if (this.state === 'IDLE') this.start();
                 });
             }
@@ -841,14 +691,14 @@ $phpVersion     = PHP_VERSION;
                     for (let c = 0; c < cols; c++) {
                         let type = 'bottom';
                         let pts = 10;
-                        let color = '#00f5d4';
+                        let color = '#38bdf8'; // Celeste suave
 
-                        if (r === 0) { type = 'top'; pts = 30; color = '#ff0055'; }
-                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#ffb703'; }
+                        if (r === 0) { type = 'top'; pts = 30; color = '#ff5c5c'; } // Coral
+                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#f7b267'; } // Ámbar
 
                         this.aliens.push({
-                            x: 60 + c * 48,
-                            y: 50 + r * 34,
+                            x: 64 + c * 48,
+                            y: 54 + r * 34,
                             w: 28,
                             h: 20,
                             type: type,
@@ -859,7 +709,7 @@ $phpVersion     = PHP_VERSION;
                     }
                 }
                 this.alienDir = 1;
-                this.alienSpeed = 0.8 + (this.level * 0.25);
+                this.alienSpeed = 0.8 + (this.level * 0.2);
             }
 
             initBunkers() {
@@ -870,7 +720,7 @@ $phpVersion     = PHP_VERSION;
 
                 for (let i = 0; i < count; i++) {
                     const bx = gap + i * (bWidth + gap);
-                    const by = this.height - 100;
+                    const by = this.height - 95;
                     for (let r = 0; r < 4; r++) {
                         for (let c = 0; c < 7; c++) {
                             if (r === 3 && (c >= 2 && c <= 4)) continue;
@@ -901,7 +751,7 @@ $phpVersion     = PHP_VERSION;
             }
 
             start() {
-                this.audio.init();
+                this.sound.init();
                 this.reset();
                 this.state = 'PLAYING';
                 this.loop();
@@ -918,6 +768,23 @@ $phpVersion     = PHP_VERSION;
             }
 
             update() {
+                if (this.state === 'LEVEL_CLEAR') {
+                    this.levelClearTimer--;
+                    if (this.levelClearTimer <= 0) {
+                        this.level++;
+                        this.score += 500;
+                        this.bullets = [];
+                        this.bombs = [];
+                        this.initAliens();
+                        this.initBunkers();
+                        this.state = 'PLAYING';
+                        if (this.callbacks.onScoreUpdate) {
+                            this.callbacks.onScoreUpdate(this.score, this.lives, this.level);
+                        }
+                    }
+                    return;
+                }
+
                 if (this.state !== 'PLAYING') return;
 
                 // 1. Mover Jugador
@@ -934,17 +801,24 @@ $phpVersion     = PHP_VERSION;
                         h: 12,
                         vy: -8
                     });
-                    this.shootCooldown = 16;
-                    this.audio.shoot();
+                    this.shootCooldown = 15;
+                    this.sound.laser();
                 }
 
-                // 3. Mover proyectiles
+                // 3. Proyectiles (SEGURO: SIN MUTAR EL ARRAY INCONSISTENTEMENTE)
+                let allAliensKilled = false;
+
                 for (let i = this.bullets.length - 1; i >= 0; i--) {
                     const b = this.bullets[i];
-                    b.y += b.vy;
-                    if (b.y < -10) { this.bullets.splice(i, 1); continue; }
+                    if (!b) continue;
 
-                    // Colisión con Bunkers
+                    b.y += b.vy;
+                    if (b.y < -10) {
+                        this.bullets.splice(i, 1);
+                        continue;
+                    }
+
+                    // Bunkers
                     let hitBunker = false;
                     for (let j = this.bunkers.length - 1; j >= 0; j--) {
                         const bk = this.bunkers[j];
@@ -958,35 +832,40 @@ $phpVersion     = PHP_VERSION;
                     }
                     if (hitBunker) continue;
 
-                    // Colisión con Invasores
+                    // Invasores
                     for (let k = 0; k < this.aliens.length; k++) {
                         const a = this.aliens[k];
                         if (a.alive && b.x < a.x + a.w && b.x + b.w > a.x && b.y < a.y + a.h && b.y + b.h > a.y) {
                             a.alive = false;
                             this.bullets.splice(i, 1);
                             this.score += a.pts;
-                            this.audio.kill();
+                            this.sound.pop();
+
                             if (this.callbacks.onScoreUpdate) {
                                 this.callbacks.onScoreUpdate(this.score, this.lives, this.level);
                             }
 
-                            const alive = this.aliens.filter(x => x.alive).length;
-                            this.alienSpeed = Math.min(4.5, 0.8 + (this.level * 0.25) + ((32 - alive) * 0.08));
+                            const remaining = this.aliens.filter(x => x.alive).length;
+                            this.alienSpeed = Math.min(4.5, 0.8 + (this.level * 0.2) + ((32 - remaining) * 0.08));
 
-                            if (alive === 0) {
-                                this.level++;
-                                this.score += 500;
-                                this.bullets = [];
-                                this.bombs = [];
-                                this.initAliens();
-                                this.initBunkers();
-                                if (this.callbacks.onScoreUpdate) {
-                                    this.callbacks.onScoreUpdate(this.score, this.lives, this.level);
-                                }
+                            // ¿Murió el último personaje?
+                            if (remaining === 0) {
+                                allAliensKilled = true;
                             }
                             break;
                         }
                     }
+
+                    if (allAliensKilled) break;
+                }
+
+                // SI SE LIMPIÓ LA OLEADA: Transición suave sin trabarse
+                if (allAliensKilled) {
+                    this.bullets = [];
+                    this.bombs = [];
+                    this.state = 'LEVEL_CLEAR';
+                    this.levelClearTimer = 50; // ~0.8 segundos de pausa celebratoria
+                    return;
                 }
 
                 // 4. Mover Invasores
@@ -1007,7 +886,7 @@ $phpVersion     = PHP_VERSION;
                     for (const a of aliveList) a.y += 14;
                 }
 
-                // 5. Bombas alienígenas
+                // 5. Bombas alien
                 this.dropTimer++;
                 if (this.dropTimer > Math.max(30, 80 - (this.level * 8)) && aliveList.length > 0) {
                     this.dropTimer = 0;
@@ -1024,8 +903,13 @@ $phpVersion     = PHP_VERSION;
                 // 6. Mover bombas
                 for (let i = this.bombs.length - 1; i >= 0; i--) {
                     const bm = this.bombs[i];
+                    if (!bm) continue;
+
                     bm.y += bm.vy;
-                    if (bm.y > this.height) { this.bombs.splice(i, 1); continue; }
+                    if (bm.y > this.height) {
+                        this.bombs.splice(i, 1);
+                        continue;
+                    }
 
                     // Bunkers
                     let hitBk = false;
@@ -1049,7 +933,7 @@ $phpVersion     = PHP_VERSION;
                         
                         this.bombs.splice(i, 1);
                         this.lives--;
-                        this.audio.hit();
+                        this.sound.boom();
                         this.player.isHit = true;
                         this.player.hitTimer = 25;
                         if (this.callbacks.onScoreUpdate) {
@@ -1070,31 +954,30 @@ $phpVersion     = PHP_VERSION;
             }
 
             render() {
-                this.ctx.fillStyle = '#06070d';
+                // Fondo oscuro limpio y suave
+                this.ctx.fillStyle = '#080a10';
                 this.ctx.fillRect(0, 0, this.width, this.height);
 
-                // Estrellas
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-                for (let s = 0; s < 35; s++) {
+                // Estrellas sutiles
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                for (let s = 0; s < 30; s++) {
                     const sx = (s * 89) % this.width;
                     const sy = (s * 47) % this.height;
                     this.ctx.fillRect(sx, sy, 2, 2);
                 }
 
-                // Bunkers
+                // Bunkers (verde menta suave)
                 for (const bk of this.bunkers) {
-                    const alpha = bk.hp === 3 ? 1.0 : (bk.hp === 2 ? 0.7 : 0.4);
-                    this.ctx.fillStyle = `rgba(0, 245, 212, ${alpha})`;
+                    const alpha = bk.hp === 3 ? 0.9 : (bk.hp === 2 ? 0.6 : 0.35);
+                    this.ctx.fillStyle = `rgba(52, 211, 153, ${alpha})`;
                     this.ctx.fillRect(bk.x, bk.y, bk.w, bk.h);
                 }
 
-                // Invasores (pixelados animados en 2 pasos)
+                // Invasores (colores amigables y animación clásica de 2 pasos)
                 const step = Math.floor(Date.now() / 400) % 2;
                 for (const a of this.aliens) {
                     if (!a.alive) continue;
                     this.ctx.fillStyle = a.color;
-                    this.ctx.shadowColor = a.color;
-                    this.ctx.shadowBlur = 6;
 
                     if (a.type === 'top') {
                         this.ctx.fillRect(a.x + 6, a.y + 2, a.w - 12, a.h - 8);
@@ -1114,86 +997,92 @@ $phpVersion     = PHP_VERSION;
                         this.ctx.fillRect(a.x + (step === 0 ? 3 : 6), a.y + a.h - 5, 5, 5);
                         this.ctx.fillRect(a.x + a.w - (step === 0 ? 8 : 11), a.y + a.h - 5, 5, 5);
                     }
-                    this.ctx.shadowBlur = 0;
 
                     // Ojos
-                    this.ctx.fillStyle = '#06070d';
+                    this.ctx.fillStyle = '#080a10';
                     this.ctx.fillRect(a.x + 8, a.y + 6, 3, 3);
                     this.ctx.fillRect(a.x + a.w - 11, a.y + 6, 3, 3);
                 }
 
-                // Proyectiles
-                this.ctx.fillStyle = '#00f5d4';
+                // Proyectiles jugador (celeste brillante)
+                this.ctx.fillStyle = '#38bdf8';
                 for (const b of this.bullets) this.ctx.fillRect(b.x, b.y, b.w, b.h);
 
-                // Bombas alien
-                this.ctx.fillStyle = '#ff0055';
+                // Bombas alien (coral)
+                this.ctx.fillStyle = '#ff5c5c';
                 for (const bm of this.bombs) this.ctx.fillRect(bm.x, bm.y, bm.w, bm.h);
 
-                // Jugador
+                // Cañón del Jugador (verde menta suave)
                 if (!this.player.isHit || Math.floor(Date.now() / 80) % 2 === 0) {
-                    this.ctx.fillStyle = '#ffb703';
-                    this.ctx.shadowColor = '#ffb703';
-                    this.ctx.shadowBlur = 8;
+                    this.ctx.fillStyle = '#34d399';
                     const x = this.player.x, y = this.player.y, w = this.player.w, h = this.player.h;
                     this.ctx.beginPath();
                     this.ctx.moveTo(x + w / 2, y);
-                    this.ctx.lineTo(x + w / 2 + 3, y + 6);
-                    this.ctx.lineTo(x + w - 4, y + 6);
+                    this.ctx.lineTo(x + w / 2 + 3, y + 5);
+                    this.ctx.lineTo(x + w - 4, y + 5);
                     this.ctx.lineTo(x + w, y + h);
                     this.ctx.lineTo(x, y + h);
-                    this.ctx.lineTo(x + 4, y + 6);
-                    this.ctx.lineTo(x + w / 2 - 3, y + 6);
+                    this.ctx.lineTo(x + 4, y + 5);
+                    this.ctx.lineTo(x + w / 2 - 3, y + 5);
                     this.ctx.closePath();
                     this.ctx.fill();
-                    this.ctx.shadowBlur = 0;
                 }
 
-                // Línea inferior
-                this.ctx.strokeStyle = 'rgba(0, 245, 212, 0.3)';
+                // Línea inferior de defensa
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
-                this.ctx.moveTo(10, this.height - 15);
-                this.ctx.lineTo(this.width - 10, this.height - 15);
+                this.ctx.moveTo(10, this.height - 14);
+                this.ctx.lineTo(this.width - 10, this.height - 14);
                 this.ctx.stroke();
+
+                // Cartel de Nivel Superado
+                if (this.state === 'LEVEL_CLEAR') {
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    this.ctx.fillRect(0, 0, this.width, this.height);
+                    this.ctx.fillStyle = '#34d399';
+                    this.ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('¡OLEADA SUPERADA!', this.width / 2, this.height / 2 - 10);
+                    this.ctx.fillStyle = '#f7b267';
+                    this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillText('+500 Puntos Bonus', this.width / 2, this.height / 2 + 18);
+                    this.ctx.textAlign = 'left';
+                }
 
                 // Pantalla Pausa
                 if (this.state === 'PAUSED') {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
-                    this.ctx.fillStyle = '#ffb703';
-                    this.ctx.font = 'bold 22px "Press Start 2P", monospace';
+                    this.ctx.fillStyle = '#f7b267';
+                    this.ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('PAUSA', this.width / 2, this.height / 2);
-                    this.ctx.font = '14px sans-serif';
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.fillText('Presiona P para continuar', this.width / 2, this.height / 2 + 35);
+                    this.ctx.fillText('JUEGO EN PAUSA', this.width / 2, this.height / 2 - 10);
+                    this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillStyle = '#94a3b8';
+                    this.ctx.fillText('Presiona P para continuar jugando', this.width / 2, this.height / 2 + 20);
                     this.ctx.textAlign = 'left';
                 }
 
                 // Pantalla Inicial
                 if (this.state === 'IDLE') {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
-                    this.ctx.fillStyle = '#ff0055';
-                    this.ctx.font = '22px "Press Start 2P", monospace';
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('SPACE INVADERS', this.width / 2, this.height / 2 - 30);
+                    this.ctx.fillText('¿Listo para jugar?', this.width / 2, this.height / 2 - 20);
 
-                    this.ctx.fillStyle = '#ffb703';
-                    this.ctx.font = '14px "Press Start 2P", monospace';
-                    this.ctx.fillText('CLIC PARA EMPEZAR', this.width / 2, this.height / 2 + 15);
-
-                    this.ctx.fillStyle = '#94a3b8';
-                    this.ctx.font = '14px sans-serif';
-                    this.ctx.fillText('← → o A/D para moverte  •  ESPACIO para disparar', this.width / 2, this.height / 2 + 50);
+                    this.ctx.fillStyle = '#ff5c5c';
+                    this.ctx.font = '15px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillText('Haz clic o presiona Espacio para comenzar', this.width / 2, this.height / 2 + 15);
                     this.ctx.textAlign = 'left';
                 }
             }
 
             gameOver() {
                 this.state = 'GAMEOVER';
-                this.audio.hit();
+                this.sound.boom();
                 this.render();
                 if (this.callbacks.onGameOver) {
                     this.callbacks.onGameOver(this.score, this.level);
@@ -1201,7 +1090,7 @@ $phpVersion     = PHP_VERSION;
             }
 
             loop() {
-                if (this.state === 'PLAYING') {
+                if (this.state === 'PLAYING' || this.state === 'LEVEL_CLEAR') {
                     this.update();
                     this.render();
                     requestAnimationFrame(() => this.loop());
@@ -1210,7 +1099,7 @@ $phpVersion     = PHP_VERSION;
         }
 
         // =====================================================================
-        // CONTROLADOR DE PÁGINA Y MODAL
+        // CONTROLADOR DE PÁGINA
         // =====================================================================
         document.addEventListener('DOMContentLoaded', () => {
             const hudScore       = document.getElementById('hudScore');
@@ -1218,132 +1107,129 @@ $phpVersion     = PHP_VERSION;
             const hudLives       = document.getElementById('hudLives');
             const hudLevel       = document.getElementById('hudLevel');
 
-            const btnStartGame   = document.getElementById('btnStartGame');
-            const btnOpenScores  = document.getElementById('btnOpenScores');
-            const btnAudioToggle = document.getElementById('btnAudioToggle');
+            const btnPlayGame    = document.getElementById('btnPlayGame');
+            const btnShowScores  = document.getElementById('btnShowScores');
+            const btnToggleSound = document.getElementById('btnToggleSound');
+            const soundIcon      = document.getElementById('soundIcon');
 
             const scoreModal       = document.getElementById('scoreModal');
             const modalHeading     = document.getElementById('modalHeading');
-            const calloutScoreBox  = document.getElementById('calloutScoreBox');
-            const finalScoreDisplay= document.getElementById('finalScoreDisplay');
+            const scoreBannerBox   = document.getElementById('scoreBannerBox');
+            const finalScoreVal    = document.getElementById('finalScoreVal');
             const saveScoreForm    = document.getElementById('saveScoreForm');
             const playerNameInput  = document.getElementById('playerNameInput');
-            const btnSubmitScore   = document.getElementById('btnSubmitScore');
-            const saveSuccessAlert = document.getElementById('saveSuccessAlert');
-            const scoresListBody   = document.getElementById('scoresListBody');
-            const btnRestartGame   = document.getElementById('btnRestartGame');
+            const btnSaveSubmit    = document.getElementById('btnSaveSubmit');
+            const saveSuccessNotice= document.getElementById('saveSuccessNotice');
+            const scoresBody       = document.getElementById('scoresBody');
+            const btnPlayAgain     = document.getElementById('btnPlayAgain');
             const btnCloseModal    = document.getElementById('btnCloseModal');
 
             let currentScore = 0;
-            let hiScore = parseInt(localStorage.getItem('si_hiscore') || '0', 10);
-            hudHiScore.textContent = hiScore.toLocaleString();
+            let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
+            hudHiScore.textContent = record.toLocaleString();
 
-            // Instancia del Juego
-            const game = new RetroSpaceInvaders('gameCanvas', {
+            const game = new SpaceInvaders('gameCanvas', {
                 onScoreUpdate: (score, lives, level) => {
                     currentScore = score;
                     hudScore.textContent = score.toLocaleString();
-                    hudLevel.textContent = String(level).padStart(2, '0');
+                    hudLevel.textContent = level;
 
-                    let lifeIcons = '';
-                    for (let i = 0; i < lives; i++) lifeIcons += '🚀 ';
-                    hudLives.textContent = lifeIcons || '0';
+                    let hearts = '';
+                    for (let i = 0; i < lives; i++) hearts += '🚀 ';
+                    hudLives.textContent = hearts || '0';
 
-                    if (score > hiScore) {
-                        hiScore = score;
-                        localStorage.setItem('si_hiscore', hiScore);
-                        hudHiScore.textContent = hiScore.toLocaleString();
+                    if (score > record) {
+                        record = score;
+                        localStorage.setItem('si_best_score', record);
+                        hudHiScore.textContent = record.toLocaleString();
                     }
                 },
                 onGameOver: (score) => {
                     currentScore = score;
-                    openLeaderboardModal(true);
+                    openModal(true);
                 }
             });
 
-            // Función para abrir la ventana modal
-            async function openLeaderboardModal(isGameOver = false) {
-                saveSuccessAlert.style.display = 'none';
+            async function openModal(isGameOver = false) {
+                saveSuccessNotice.style.display = 'none';
 
                 if (isGameOver) {
-                    modalHeading.innerHTML = '<span>👾</span> ¡FIN DEL JUEGO!';
-                    calloutScoreBox.style.display = 'flex';
-                    finalScoreDisplay.textContent = currentScore.toLocaleString();
+                    modalHeading.innerHTML = '<span>👾</span> ¡Partida Terminada!';
+                    scoreBannerBox.style.display = 'flex';
+                    finalScoreVal.textContent = currentScore.toLocaleString();
                     saveScoreForm.style.display = 'flex';
                     playerNameInput.value = '';
                     playerNameInput.focus();
                 } else {
-                    modalHeading.innerHTML = '<span>🏆</span> MEJORES PUNTUACIONES';
-                    calloutScoreBox.style.display = 'none';
+                    modalHeading.innerHTML = '<span>🏆</span> Mejores Puntuaciones';
+                    scoreBannerBox.style.display = 'none';
                     saveScoreForm.style.display = 'none';
                 }
 
                 scoreModal.classList.add('active');
-                await loadScores();
+                await fetchLeaderboard();
             }
 
-            function closeLeaderboardModal() {
+            function closeModal() {
                 scoreModal.classList.remove('active');
             }
 
-            // Cargar puntuaciones desde api.php
-            async function loadScores() {
-                scoresListBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-dim);">Cargando...</td></tr>`;
+            async function fetchLeaderboard() {
+                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando puntuaciones...</td></tr>`;
 
                 try {
                     const res = await fetch('api.php?action=leaderboard');
                     const json = await res.json();
 
                     if (json.success && json.data && json.data.scores) {
-                        renderScoresTable(json.data.scores);
+                        renderTable(json.data.scores);
                     } else {
-                        scoresListBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">No hay registros disponibles</td></tr>`;
+                        scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">No hay registros aún</td></tr>`;
                     }
                 } catch(e) {
-                    scoresListBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: #ff0055;">Error conectando a la base de datos</td></tr>`;
+                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--accent-coral);">No se pudo conectar a la base de datos</td></tr>`;
                 }
             }
 
-            function renderScoresTable(scores) {
+            function renderTable(scores) {
                 if (!scores.length) {
-                    scoresListBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">Sé el primero en la lista</td></tr>`;
+                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">Sé el primero en registrar récord</td></tr>`;
                     return;
                 }
 
                 let html = '';
                 scores.forEach((s) => {
-                    let medal = `#${s.rank}`;
+                    let pos = `#${s.rank}`;
                     let rowClass = '';
-                    if (s.rank === 1) { medal = '🥇 #1'; rowClass = 'rank-1'; }
-                    else if (s.rank === 2) { medal = '🥈 #2'; rowClass = 'rank-2'; }
-                    else if (s.rank === 3) { medal = '🥉 #3'; rowClass = 'rank-3'; }
+                    if (s.rank === 1) { pos = '🥇 1'; rowClass = 'top-1'; }
+                    else if (s.rank === 2) { pos = '🥈 2'; rowClass = 'top-2'; }
+                    else if (s.rank === 3) { pos = '🥉 3'; rowClass = 'top-3'; }
 
                     html += `
                         <tr class="${rowClass}">
-                            <td class="col-rank">${medal}</td>
-                            <td class="col-user">${escapeHtml(s.username)}</td>
+                            <td class="col-pos">${pos}</td>
+                            <td class="col-name">${escapeHtml(s.username)}</td>
                             <td class="col-pts">${Number(s.score).toLocaleString()}</td>
-                            <td class="col-date">${escapeHtml(s.date || '')}</td>
+                            <td class="col-time">${escapeHtml(s.date || '')}</td>
                         </tr>
                     `;
                 });
-                scoresListBody.innerHTML = html;
+                scoresBody.innerHTML = html;
             }
 
             function escapeHtml(text) {
-                const p = document.createElement('p');
-                p.textContent = text;
-                return p.innerHTML;
+                const el = document.createElement('div');
+                el.textContent = text;
+                return el.innerHTML;
             }
 
-            // Guardar Puntuación
             saveScoreForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const username = playerNameInput.value.trim();
                 if (!username) return;
 
-                btnSubmitScore.disabled = true;
-                btnSubmitScore.textContent = 'Guardando...';
+                btnSaveSubmit.disabled = true;
+                btnSaveSubmit.textContent = 'Guardando...';
 
                 try {
                     const res = await fetch('api.php?action=submit_score', {
@@ -1354,43 +1240,42 @@ $phpVersion     = PHP_VERSION;
                     const json = await res.json();
 
                     if (json.success) {
-                        saveSuccessAlert.textContent = `¡Récord guardado con éxito! Rango #${json.data.rank}`;
-                        saveSuccessAlert.style.display = 'block';
+                        saveSuccessNotice.textContent = `¡Récord guardado con éxito! Posición #${json.data.rank}`;
+                        saveSuccessNotice.style.display = 'block';
                         saveScoreForm.style.display = 'none';
-                        await loadScores();
+                        await fetchLeaderboard();
                     } else {
                         alert(json.message || 'Error al guardar');
                     }
                 } catch(err) {
-                    alert('Error de conexión con el servidor');
+                    alert('Error al guardar la puntuación');
                 } finally {
-                    btnSubmitScore.disabled = false;
-                    btnSubmitScore.textContent = 'Guardar';
+                    btnSaveSubmit.disabled = false;
+                    btnSaveSubmit.textContent = 'Guardar';
                 }
             });
 
-            // Eventos de botones
-            btnStartGame.addEventListener('click', () => {
-                closeLeaderboardModal();
+            btnPlayGame.addEventListener('click', () => {
+                closeModal();
                 game.start();
             });
 
-            btnRestartGame.addEventListener('click', () => {
-                closeLeaderboardModal();
+            btnPlayAgain.addEventListener('click', () => {
+                closeModal();
                 game.start();
             });
 
-            btnOpenScores.addEventListener('click', () => {
-                openLeaderboardModal(false);
+            btnShowScores.addEventListener('click', () => {
+                openModal(false);
             });
 
             btnCloseModal.addEventListener('click', () => {
-                closeLeaderboardModal();
+                closeModal();
             });
 
-            btnAudioToggle.addEventListener('click', () => {
-                const on = game.audio.toggle();
-                btnAudioToggle.textContent = on ? '🔊' : '🔇';
+            btnToggleSound.addEventListener('click', () => {
+                const active = game.sound.toggle();
+                soundIcon.textContent = active ? '🔊' : '🔇';
             });
         });
     </script>
