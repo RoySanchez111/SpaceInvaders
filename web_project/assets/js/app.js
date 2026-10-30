@@ -1,365 +1,214 @@
 /**
- * =============================================================================
- * PORTAL TÁCTICO // CONTROLADOR MAESTRO DE APLICACIÓN (app.js)
- * Conexión Asíncrona con api.php, Leaderboard en Tiempo Real y HUD
- * =============================================================================
+ * Controlador principal de Space Invaders
+ * Conecta el juego con la API de puntuaciones y el modal de fin de juego.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Instanciar Juego de Combate
-    const game = new window.CoreDefenderGame('defenseCanvas');
+    // Elementos del HUD
+    const hudScore     = document.getElementById('hudScore');
+    const hudHighScore = document.getElementById('hudHighScore');
+    const hudLives     = document.getElementById('hudLives');
+    const hudLevel     = document.getElementById('hudLevel');
 
-    // Elementos del DOM - Controles del Juego
-    const btnStartGame       = document.getElementById('btnStartGame');
-    const btnPauseGame       = document.getElementById('btnPauseGame');
-    const btnEmpPulse        = document.getElementById('btnEmpPulse');
-    const btnAudioToggle     = document.getElementById('btnAudioToggle');
-    const audioIcon          = document.getElementById('audioIcon');
-    const audioLabel         = document.getElementById('audioLabel');
-    const canvasOverlay      = document.getElementById('canvasOverlay');
-    const btnOverlayAction   = document.getElementById('btnOverlayAction');
+    // Botones
+    const btnNewGame     = document.getElementById('btnNewGame');
+    const btnViewScores  = document.getElementById('btnViewScores');
 
-    // Elementos del DOM - Leaderboard & Búsqueda
-    const leaderboardRows    = document.getElementById('leaderboardRows');
-    const leaderboardSearch  = document.getElementById('leaderboardSearch');
-    const btnClearSearch     = document.getElementById('btnClearSearch');
-    const btnRefresh         = document.getElementById('btnRefreshLeaderboard');
-    const refreshIcon        = document.getElementById('refreshIcon');
+    // Modal de Puntuaciones / Fin de Juego
+    const scoreModal      = document.getElementById('scoreModal');
+    const modalTitle      = document.getElementById('modalTitle');
+    const finalScoreBox   = document.getElementById('finalScoreBox');
+    const finalScoreVal   = document.getElementById('finalScoreVal');
+    const scoreForm       = document.getElementById('scoreForm');
+    const inputPlayer     = document.getElementById('inputPlayer');
+    const btnSaveScore    = document.getElementById('btnSaveScore');
+    const btnPlayAgain    = document.getElementById('btnPlayAgain');
+    const btnCloseModal   = document.getElementById('btnCloseModal');
+    const leaderboardBody = document.getElementById('leaderboardBody');
+    const saveNotice      = document.getElementById('saveNotice');
 
-    // Elementos del DOM - Formulario de Registro
-    const scoreSubmitForm    = document.getElementById('scoreSubmitForm');
-    const inputCallsign      = document.getElementById('inputCallsign');
-    const selectFaction      = document.getElementById('selectFaction');
-    const inputScore         = document.getElementById('inputScore');
-    const inputWave          = document.getElementById('inputWave');
-    const btnSubmitScore     = document.getElementById('btnSubmitScore');
+    // Telemetría en footer
+    const dbStatusDot = document.getElementById('dbStatusDot');
+    const dbStatusTxt = document.getElementById('dbStatusTxt');
 
-    // Elementos del DOM - Modal Debriefing (Game Over)
-    const debriefModal       = document.getElementById('debriefModal');
-    const debriefScore       = document.getElementById('debriefScore');
-    const debriefWave        = document.getElementById('debriefWave');
-    const debriefKills       = document.getElementById('debriefKills');
-    const debriefAccuracy    = document.getElementById('debriefAccuracy');
-    const btnModalSaveScore  = document.getElementById('btnModalSaveScore');
-    const btnModalRetry      = document.getElementById('btnModalRetry');
+    let currentScore = 0;
+    let localHighScore = parseInt(localStorage.getItem('space_invaders_hi') || '0', 10);
+    hudHighScore.textContent = localHighScore.toLocaleString();
 
-    // Telemetría de Servidor en Footer
-    const dbPulse            = document.getElementById('dbPulse');
-    const dbStatusLabel      = document.getElementById('dbStatusLabel');
-    const pingVal            = document.getElementById('pingVal');
+    // Iniciar el juego
+    const game = new window.SpaceInvadersGame('gameCanvas', {
+        onScoreUpdate: (score, lives, level) => {
+            currentScore = score;
+            hudScore.textContent = score.toLocaleString();
+            hudLevel.textContent = String(level).padStart(2, '0');
 
-    // =========================================================================
-    // 1. GESTIÓN DE NOTIFICACIONES TOAST TÁCTICAS
-    // =========================================================================
-    function showToast(message, type = 'crimson') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
+            // Representar vidas con naves o corazones
+            let hearts = '';
+            for (let i = 0; i < lives; i++) hearts += '🚀 ';
+            hudLives.textContent = hearts || '0';
 
-        const toast = document.createElement('div');
-        toast.className = `tactical-toast toast-${type}`;
-        
-        let icon = '⚡';
-        if (type === 'success') icon = '✓';
-        if (type === 'gold') icon = '★';
-
-        toast.innerHTML = `
-            <span class="toast-icon">${icon}</span>
-            <span class="toast-msg">${message}</span>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            toast.style.transition = 'all 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
-
-    // =========================================================================
-    // 2. CONTROL DEL JUEGO Y BOTONES
-    // =========================================================================
-    function startGameSession() {
-        canvasOverlay.classList.remove('active');
-        btnStartGame.textContent = '↻ REINICIAR COMBATE';
-        btnPauseGame.disabled = false;
-        btnPauseGame.textContent = '⏸ PAUSAR';
-        game.start();
-    }
-
-    btnOverlayAction.addEventListener('click', startGameSession);
-    btnStartGame.addEventListener('click', startGameSession);
-
-    btnPauseGame.addEventListener('click', () => {
-        game.pause();
-        if (game.isPaused) {
-            btnPauseGame.textContent = '▶ REANUDAR';
-            showToast('SISTEMA EN PAUSA TÁCTICA', 'gold');
-        } else {
-            btnPauseGame.textContent = '⏸ PAUSAR';
+            if (score > localHighScore) {
+                localHighScore = score;
+                localStorage.setItem('space_invaders_hi', localHighScore);
+                hudHighScore.textContent = localHighScore.toLocaleString();
+            }
+        },
+        onGameOver: (finalScore, level) => {
+            currentScore = finalScore;
+            openScoreModal(true);
         }
     });
 
-    btnEmpPulse.addEventListener('click', () => {
-        game.triggerEmpPulse();
-    });
+    // Abrir Modal de Puntuaciones
+    async function openScoreModal(isGameOver = false) {
+        saveNotice.style.display = 'none';
 
-    btnAudioToggle.addEventListener('click', () => {
-        const isMuted = !game.sound.toggle();
-        if (isMuted) {
-            audioIcon.textContent = '🔇';
-            audioLabel.textContent = 'AUDIO OFF';
-            showToast('CANAL DE AUDIO SILENCIADO', 'crimson');
+        if (isGameOver) {
+            modalTitle.textContent = '¡JUEGO TERMINADO!';
+            finalScoreBox.style.display = 'block';
+            finalScoreVal.textContent = currentScore.toLocaleString();
+            scoreForm.style.display = 'flex';
+            inputPlayer.value = '';
+            inputPlayer.focus();
         } else {
-            audioIcon.textContent = '🔊';
-            audioLabel.textContent = 'AUDIO ON';
-            showToast('SÍNTESIS DE AUDIO ACTIVADA', 'gold');
+            modalTitle.textContent = 'MEJORES PUNTUACIONES';
+            finalScoreBox.style.display = 'none';
+            scoreForm.style.display = 'none';
         }
-    });
 
-    // =========================================================================
-    // 3. CAPTURA DEL EVENTO GAME OVER Y DEBRIEFING
-    // =========================================================================
-    window.addEventListener('coreDefender:gameOver', (e) => {
-        const { score, wave, kills, accuracy } = e.detail;
+        scoreModal.classList.add('active');
+        await loadLeaderboard();
+    }
 
-        debriefScore.textContent = score.toLocaleString();
-        debriefWave.textContent = `OLEADA ${wave.toString().padStart(2, '0')}`;
-        debriefKills.textContent = kills;
-        debriefAccuracy.textContent = `${accuracy}%`;
+    function closeScoreModal() {
+        scoreModal.classList.remove('active');
+    }
 
-        // Pre-cargar valores en el formulario de la derecha
-        inputScore.value = score;
-        inputWave.value = wave;
-
-        btnPauseGame.disabled = true;
-        debriefModal.classList.add('active');
-    });
-
-    btnModalRetry.addEventListener('click', () => {
-        debriefModal.classList.remove('active');
-        startGameSession();
-    });
-
-    btnModalSaveScore.addEventListener('click', () => {
-        debriefModal.classList.remove('active');
-        // Llevar el foco suavemente al formulario de registro
-        scoreSubmitForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        inputCallsign.focus();
-        showToast('CONFIRMA TU CALLSIGN Y ENVÍA TU RÉCORD', 'gold');
-    });
-
-    // =========================================================================
-    // 4. LEADERBOARD // CONSULTA Y FILTRADO ASÍNCRONO (fetch API)
-    // =========================================================================
-    async function loadLeaderboard(searchTerm = '') {
-        refreshIcon.classList.add('rotating');
+    // Cargar Leaderboard desde MariaDB
+    async function loadLeaderboard() {
+        leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Cargando puntuaciones...</td></tr>`;
 
         try {
-            const url = `api.php?action=leaderboard&search=${encodeURIComponent(searchTerm)}&limit=15`;
-            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP Error ${response.status}`);
-            }
+            const res = await fetch('api.php?action=leaderboard');
+            const json = await res.json();
 
-            const result = await response.json();
-
-            if (result.success && result.data && Array.isArray(result.data.scores)) {
-                renderLeaderboard(result.data.scores);
-                
-                // Actualizar estado de BD si el endpoint lo reporta
-                if (result.data.db_connected !== undefined) {
-                    updateDatabaseIndicator(result.data.db_connected);
+            if (json.success && json.data && json.data.scores) {
+                renderLeaderboard(json.data.scores);
+                if (json.data.db_connected !== undefined) {
+                    updateDbStatus(json.data.db_connected);
                 }
             } else {
-                leaderboardRows.innerHTML = `
-                    <div style="padding: 24px; text-align: center; color: var(--text-muted); font-family: var(--font-mono);">
-                        NO SE REGISTRARON EXPEDIENTES
-                    </div>
-                `;
+                leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Sin registros aún</td></tr>`;
             }
-        } catch (err) {
-            console.error('Error cargando leaderboard:', err);
-            showToast('Falla al conectar con MariaDB', 'crimson');
-        } finally {
-            refreshIcon.classList.remove('rotating');
+        } catch (e) {
+            leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px; color:#e63946;">No se pudo conectar a la base de datos</td></tr>`;
         }
     }
 
     function renderLeaderboard(scores) {
-        if (scores.length === 0) {
-            leaderboardRows.innerHTML = `
-                <div style="padding: 24px; text-align: center; color: var(--text-muted); font-family: var(--font-mono);">
-                    NO SE ENCONTRARON COMANDANTES CON ESTE CRITERIO
-                </div>
-            `;
+        if (!scores.length) {
+            leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Sé el primero en registrar un récord</td></tr>`;
             return;
         }
 
         let html = '';
-        scores.forEach((item, index) => {
-            const rank = index + 1;
-            let rankClass = 'rank-default';
-            if (rank === 1) rankClass = 'rank-gold';
-            else if (rank === 2) rankClass = 'rank-silver';
-            else if (rank === 3) rankClass = 'rank-bronze';
-
-            const faction = item.faction || 'Solar Vanguard';
-            const factionSlug = faction.toLowerCase().replace(/\s+/g, '-');
-            const waveFormatted = `W-${String(item.wave_reached || 1).padStart(2, '0')}`;
-            const scoreFormatted = Number(item.score || 0).toLocaleString();
+        scores.forEach(s => {
+            let rankBadge = `#${s.rank}`;
+            let rankClass = '';
+            if (s.rank === 1) { rankBadge = '🥇 #1'; rankClass = 'rank-gold'; }
+            else if (s.rank === 2) { rankBadge = '🥈 #2'; rankClass = 'rank-silver'; }
+            else if (s.rank === 3) { rankBadge = '🥉 #3'; rankClass = 'rank-bronze'; }
 
             html += `
-                <div class="leaderboard-row ${rankClass}">
-                    <div class="col-rank">
-                        <span class="rank-badge ${rankClass}">#${rank}</span>
-                    </div>
-                    <div class="col-player">
-                        <div class="player-callsign" title="${escapeHtml(item.username)}">${escapeHtml(item.username)}</div>
-                        <div class="player-faction-tag faction-${factionSlug}">${escapeHtml(faction)}</div>
-                    </div>
-                    <div class="col-wave">
-                        <span class="wave-pill">${waveFormatted}</span>
-                    </div>
-                    <div class="col-score">
-                        <span class="score-number">${scoreFormatted}</span>
-                    </div>
-                </div>
+                <tr class="${rankClass}">
+                    <td class="col-rank">${rankBadge}</td>
+                    <td class="col-user"><strong>${escapeHtml(s.username)}</strong></td>
+                    <td class="col-pts">${Number(s.score).toLocaleString()}</td>
+                    <td class="col-date">${escapeHtml(s.date || '')}</td>
+                </tr>
             `;
         });
-
-        leaderboardRows.innerHTML = html;
+        leaderboardBody.innerHTML = html;
     }
 
-    function escapeHtml(text) {
+    function escapeHtml(str) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = str;
         return div.innerHTML;
     }
 
-    // Buscador en tiempo real con debounce
-    let searchDebounceTimer = null;
-    leaderboardSearch.addEventListener('input', (e) => {
-        const val = e.target.value.trim();
-        btnClearSearch.style.display = val.length > 0 ? 'block' : 'none';
-
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            loadLeaderboard(val);
-        }, 220);
-    });
-
-    btnClearSearch.addEventListener('click', () => {
-        leaderboardSearch.value = '';
-        btnClearSearch.style.display = 'none';
-        loadLeaderboard('');
-        leaderboardSearch.focus();
-    });
-
-    btnRefresh.addEventListener('click', () => {
-        loadLeaderboard(leaderboardSearch.value.trim());
-        showToast('LEADERBOARD SINCRONIZADO', 'gold');
-    });
-
-    // =========================================================================
-    // 5. TRANSMISIÓN DE PUNTAJES A MARIADB (fetch POST)
-    // =========================================================================
-    scoreSubmitForm.addEventListener('submit', async (e) => {
+    // Guardar Puntuación
+    scoreForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const username = inputPlayer.value.trim();
+        if (!username) return;
 
-        const username = inputCallsign.value.trim();
-        const faction = selectFaction.value;
-        const score = parseInt(inputScore.value, 10) || 0;
-        const waveReached = parseInt(inputWave.value, 10) || 1;
-
-        if (!username) {
-            showToast('DEBES INGRESAR UN CALLSIGN VÁLIDO', 'crimson');
-            inputCallsign.focus();
-            return;
-        }
-
-        btnSubmitScore.disabled = true;
-        btnSubmitScore.innerHTML = '<span class="btn-glow"></span> TRANSMITIENDO...';
+        btnSaveScore.disabled = true;
+        btnSaveScore.textContent = 'Guardando...';
 
         try {
-            const response = await fetch('api.php?action=submit_score', {
+            const res = await fetch('api.php?action=submit_score', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    faction: faction,
-                    score: score,
-                    wave_reached: waveReached
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, score: currentScore })
             });
 
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                const rankAchieved = result.data?.rank ? `RANGO #${result.data.rank}` : 'REGISTRADO';
-                showToast(`¡PUNTAJE TRANSMITIDO CON ÉXITO! (${rankAchieved})`, 'success');
-                
-                // Recargar Leaderboard para reflejar la posición de inmediato
-                leaderboardSearch.value = '';
-                btnClearSearch.style.display = 'none';
-                await loadLeaderboard('');
+            const json = await res.json();
+            if (json.success) {
+                saveNotice.textContent = `¡Puntuación guardada! Rango #${json.data.rank}`;
+                saveNotice.style.display = 'block';
+                scoreForm.style.display = 'none';
+                await loadLeaderboard();
             } else {
-                throw new Error(result.message || 'Error en la transmisión');
+                alert(json.message || 'Error al guardar');
             }
         } catch (err) {
-            console.error('Error enviando puntuación:', err);
-            showToast(`ERROR: ${err.message}`, 'crimson');
+            alert('Error de conexión al guardar puntuación');
         } finally {
-            btnSubmitScore.disabled = false;
-            btnSubmitScore.innerHTML = '<span class="btn-glow"></span> TRANSMITIR PUNTUACIÓN AL CUARTEL GENERAL';
+            btnSaveScore.disabled = false;
+            btnSaveScore.textContent = 'Guardar';
         }
     });
 
-    // =========================================================================
-    // 6. TELEMETRÍA Y PING AL SERVIDOR
-    // =========================================================================
-    function updateDatabaseIndicator(isConnected) {
-        if (!dbPulse || !dbStatusLabel) return;
-        if (isConnected) {
-            dbPulse.className = 'pulse-indicator online';
-            dbStatusLabel.className = 'telemetry-val text-green';
-            dbStatusLabel.textContent = 'ONLINE';
+    // Botones de acción
+    btnNewGame.addEventListener('click', () => {
+        closeScoreModal();
+        game.start();
+    });
+
+    btnPlayAgain.addEventListener('click', () => {
+        closeScoreModal();
+        game.start();
+    });
+
+    btnViewScores.addEventListener('click', () => {
+        openScoreModal(false);
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+        closeScoreModal();
+    });
+
+    // Telemetría
+    function updateDbStatus(ok) {
+        if (ok) {
+            dbStatusDot.className = 'status-dot online';
+            dbStatusTxt.textContent = 'Conectada';
+            dbStatusTxt.style.color = '#2ec4b6';
         } else {
-            dbPulse.className = 'pulse-indicator degraded';
-            dbStatusLabel.className = 'telemetry-val text-amber';
-            dbStatusLabel.textContent = 'DEGRADADO';
+            dbStatusDot.className = 'status-dot offline';
+            dbStatusTxt.textContent = 'Desconectada';
+            dbStatusTxt.style.color = '#e63946';
         }
     }
 
-    async function checkServerStatus() {
-        const startTime = performance.now();
-        try {
-            const res = await fetch('api.php?action=status');
-            const latency = Math.round(performance.now() - startTime);
-
-            if (pingVal) {
-                pingVal.textContent = `${latency} ms`;
+    // Comprobar estado inicial del servidor
+    fetch('api.php?action=status')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data) {
+                updateDbStatus(res.data.db_connected);
             }
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.data) {
-                    updateDatabaseIndicator(data.data.db_connected);
-                }
-            }
-        } catch (e) {
-            if (pingVal) pingVal.textContent = 'ERR';
-            updateDatabaseIndicator(false);
-        }
-    }
-
-    // Ping inicial y chequeo periódico cada 30s
-    checkServerStatus();
-    setInterval(checkServerStatus, 30000);
+        })
+        .catch(() => updateDbStatus(false));
 });
-
