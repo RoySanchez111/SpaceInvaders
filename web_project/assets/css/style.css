@@ -1,5 +1,5 @@
 :root {
-    --bg-color: #0e111a;
+    --bg-color: #0d1017;
     --card-bg: #161b26;
     --card-border: rgba(255, 255, 255, 0.08);
     --accent-coral: #ff5c5c;
@@ -49,6 +49,8 @@ body {
     border: 1px solid var(--card-border);
     border-radius: 14px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .game-logo {
@@ -74,6 +76,33 @@ body {
     gap: 8px;
 }
 
+.user-pill {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: var(--accent-mint);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-logout {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding-left: 4px;
+}
+
+.btn-logout:hover {
+    color: #fff;
+}
+
 .btn-header {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -94,6 +123,12 @@ body {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
+}
+
+.btn-header.highlight {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.35);
+    color: var(--accent-mint);
 }
 
 .arcade-card {
@@ -195,7 +230,7 @@ body {
     background: var(--accent-coral);
     color: #fff;
     border: none;
-    padding: 10px 22px;
+    padding: 11px 22px;
     border-radius: 9px;
     font-family: var(--font-main);
     font-size: 0.95rem;
@@ -214,8 +249,9 @@ body {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 12, 18, 0.8);
+    background: rgba(10, 12, 18, 0.85);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -229,15 +265,15 @@ body {
 
 .modal-dialog {
     background: #171c28;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    max-width: 480px;
+    max-width: 440px;
     width: 100%;
     padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
 }
 
 .modal-header {
@@ -262,6 +298,125 @@ body {
     font-size: 1.3rem;
     cursor: pointer;
     line-height: 1;
+    padding: 4px;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.auth-tab {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 9px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-tab.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-family: var(--font-main);
+    font-size: 0.98rem;
+    outline: none;
+}
+
+.auth-input:focus {
+    border-color: var(--accent-mint);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.btn-toggle-pwd {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.auth-error {
+    background: rgba(255, 92, 92, 0.15);
+    color: #ff7070;
+    border: 1px solid rgba(255, 92, 92, 0.35);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: none;
+    line-height: 1.4;
+}
+
+.auth-error button {
+    background: none;
+    border: none;
+    color: var(--accent-mint);
+    text-decoration: underline;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
+}
+
+.auth-switch-hint {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 2px;
+}
+
+.auth-switch-hint a {
+    color: var(--accent-mint);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .score-banner {
@@ -288,36 +443,16 @@ body {
     color: var(--accent-amber);
 }
 
-.save-form {
-    display: flex;
-    gap: 8px;
-}
-
-.save-form input {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-family: var(--font-main);
-    font-size: 0.95rem;
-    outline: none;
-}
-
-.save-form input:focus {
-    border-color: var(--accent-mint);
-}
-
 .toast-msg {
     background: rgba(52, 211, 153, 0.15);
     color: var(--accent-green);
     border: 1px solid rgba(52, 211, 153, 0.3);
-    padding: 10px;
+    padding: 10px 14px;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 600;
     text-align: center;
+    line-height: 1.4;
 }
 
 .table-section-title {
@@ -330,8 +465,8 @@ body {
 }
 
 .scores-table-container {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
     overflow: hidden;
     max-height: 220px;
@@ -345,18 +480,18 @@ body {
 }
 
 .clean-table th {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.35);
     padding: 8px 12px;
     text-align: left;
     color: var(--text-secondary);
     font-size: 0.78rem;
     font-weight: 700;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .clean-table td {
     padding: 8px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .clean-table .col-pos { width: 45px; font-weight: 700; color: var(--text-secondary); }

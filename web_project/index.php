@@ -18,7 +18,7 @@ require_once __DIR__ . '/config/db.php';
 
     <style>
         :root {
-            --bg-color: #0e111a;
+            --bg-color: #0d1017;
             --card-bg: #161b26;
             --card-border: rgba(255, 255, 255, 0.08);
             --accent-coral: #ff5c5c;
@@ -255,7 +255,7 @@ require_once __DIR__ . '/config/db.php';
             background: var(--accent-coral);
             color: #fff;
             border: none;
-            padding: 10px 22px;
+            padding: 11px 22px;
             border-radius: 9px;
             font-family: var(--font-main);
             font-size: 0.95rem;
@@ -279,6 +279,7 @@ require_once __DIR__ . '/config/db.php';
             inset: 0;
             background: rgba(10, 12, 18, 0.85);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -292,7 +293,7 @@ require_once __DIR__ . '/config/db.php';
 
         .modal-dialog {
             background: #171c28;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 16px;
             max-width: 440px;
             width: 100%;
@@ -300,7 +301,7 @@ require_once __DIR__ . '/config/db.php';
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
             animation: popIn 0.2s ease forwards;
         }
 
@@ -331,6 +332,7 @@ require_once __DIR__ . '/config/db.php';
             font-size: 1.3rem;
             cursor: pointer;
             line-height: 1;
+            padding: 4px;
         }
 
         .btn-close:hover {
@@ -341,9 +343,9 @@ require_once __DIR__ . '/config/db.php';
         .auth-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 3px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            padding: 4px;
             gap: 4px;
         }
 
@@ -352,10 +354,10 @@ require_once __DIR__ . '/config/db.php';
             border: none;
             color: var(--text-secondary);
             font-family: var(--font-main);
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             font-weight: 700;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 9px;
+            border-radius: 7px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -363,52 +365,107 @@ require_once __DIR__ . '/config/db.php';
         .auth-tab.active {
             background: rgba(255, 255, 255, 0.12);
             color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .auth-form {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
         }
 
         .form-label {
-            font-size: 0.78rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 700;
             color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .auth-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             color: #fff;
-            padding: 10px 14px;
-            border-radius: 8px;
+            padding: 11px 14px;
+            border-radius: 9px;
             font-family: var(--font-main);
-            font-size: 0.95rem;
+            font-size: 0.98rem;
             outline: none;
+            transition: all 0.2s ease;
         }
 
         .auth-input:focus {
             border-color: var(--accent-mint);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        .btn-toggle-pwd {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .btn-toggle-pwd:hover {
+            color: #fff;
         }
 
         .auth-error {
             background: rgba(255, 92, 92, 0.15);
-            color: var(--accent-coral);
-            border: 1px solid rgba(255, 92, 92, 0.3);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.82rem;
+            color: #ff7070;
+            border: 1px solid rgba(255, 92, 92, 0.35);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
             font-weight: 600;
             display: none;
+            line-height: 1.4;
+        }
+
+        .auth-error button {
+            background: none;
+            border: none;
+            color: var(--accent-mint);
+            text-decoration: underline;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .auth-switch-hint {
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .auth-switch-hint a {
+            color: var(--accent-mint);
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .auth-switch-hint a:hover {
+            text-decoration: underline;
         }
 
         /* CAJA DE PUNTAJE TRAS PARTIDA */
@@ -440,11 +497,12 @@ require_once __DIR__ . '/config/db.php';
             background: rgba(52, 211, 153, 0.15);
             color: var(--accent-green);
             border: 1px solid rgba(52, 211, 153, 0.3);
-            padding: 10px;
+            padding: 10px 14px;
             border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
             text-align: center;
+            line-height: 1.4;
         }
 
         /* TABLA DE POSICIONES */
@@ -458,8 +516,8 @@ require_once __DIR__ . '/config/db.php';
         }
 
         .scores-table-container {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 10px;
             overflow: hidden;
             max-height: 220px;
@@ -473,18 +531,18 @@ require_once __DIR__ . '/config/db.php';
         }
 
         .clean-table th {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.35);
             padding: 8px 12px;
             text-align: left;
             color: var(--text-secondary);
             font-size: 0.78rem;
             font-weight: 700;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .clean-table td {
             padding: 8px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .clean-table .col-pos { width: 45px; font-weight: 700; color: var(--text-secondary); }
@@ -520,7 +578,7 @@ require_once __DIR__ . '/config/db.php';
             </div>
 
             <div class="header-actions">
-                <!-- Identificación del Jugador con Token -->
+                <!-- Estado de Sesión con Token JSON -->
                 <div class="user-pill" id="userBadgeBox" style="display: none;">
                     <span>👤</span>
                     <span id="displayUsername">Usuario</span>
@@ -587,7 +645,7 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =========================================================================
-         MODAL 1: AUTENTICACIÓN (LOGIN & REGISTRO CON PASSWORD HASH Y TOKEN)
+         MODAL 1: AUTENTICACIÓN (LOGIN & REGISTRO ROBUSTO Y HUMANO)
          ========================================================================= -->
     <div class="modal-overlay" id="authModal">
         <div class="modal-dialog">
@@ -598,7 +656,7 @@ require_once __DIR__ . '/config/db.php';
                 <button type="button" class="btn-close" id="btnCloseAuth">✕</button>
             </div>
 
-            <!-- Selector Pestañas: Login / Registro -->
+            <!-- Pestañas: Iniciar Sesión / Crear Cuenta -->
             <div class="auth-tabs">
                 <button type="button" class="auth-tab active" id="tabLogin">Iniciar Sesión</button>
                 <button type="button" class="auth-tab" id="tabRegister">Crear Cuenta</button>
@@ -608,18 +666,25 @@ require_once __DIR__ . '/config/db.php';
 
             <form class="auth-form" id="authForm">
                 <div class="form-group">
-                    <label class="form-label" for="authUsernameInput">Usuario</label>
-                    <input type="text" class="auth-input" id="authUsernameInput" placeholder="Ej. Alex" maxlength="20" required autocomplete="username">
+                    <label class="form-label" for="authUsernameInput">Nombre de Usuario</label>
+                    <input type="text" class="auth-input" id="authUsernameInput" placeholder="Ej. Alex" maxlength="25" required autocomplete="username">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="authPasswordInput">Contraseña</label>
-                    <input type="password" class="auth-input" id="authPasswordInput" placeholder="Tu contraseña" minlength="4" required autocomplete="current-password">
+                    <div class="input-wrapper">
+                        <input type="password" class="auth-input" id="authPasswordInput" placeholder="Tu contraseña secreta" minlength="3" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pwd" id="btnTogglePwd" title="Mostrar/Ocultar contraseña">👁️</button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-primary" id="btnAuthSubmit" style="width: 100%; margin-top: 4px;">
                     Entrar a Jugar
                 </button>
+
+                <div class="auth-switch-hint" id="authSwitchHint">
+                    ¿No tienes cuenta todavía? <a id="linkSwitchToRegister">Regístrate aquí</a>
+                </div>
             </form>
         </div>
     </div>
@@ -674,7 +739,7 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =========================================================================
-         MOTOR DE JUEGO (SPACE INVADERS)
+         MOTOR DE JUEGO (SPACE INVADERS - SIN INTERCEPTAR TECLAS EN FORMULARIOS)
          ========================================================================= -->
     <script>
         class SoundFX {
@@ -789,7 +854,16 @@ require_once __DIR__ . '/config/db.php';
             }
 
             initControls() {
+                // CORRECCIÓN CRÍTICA: NO interceptar teclas si el usuario está escribiendo en un input o si hay un modal abierto
                 window.addEventListener('keydown', (e) => {
+                    const tag = e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                        return; // Permitir escribir 'a', 'd', 'w', espacio y flechas sin restricciones
+                    }
+                    if (document.querySelector('.modal-overlay.active')) {
+                        return;
+                    }
+
                     if (['ArrowLeft', 'KeyA'].includes(e.code)) { this.keys.left = true; e.preventDefault(); }
                     if (['ArrowRight', 'KeyD'].includes(e.code)) { this.keys.right = true; e.preventDefault(); }
                     if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
@@ -807,6 +881,14 @@ require_once __DIR__ . '/config/db.php';
                 });
 
                 window.addEventListener('keyup', (e) => {
+                    const tag = e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                        return;
+                    }
+                    if (document.querySelector('.modal-overlay.active')) {
+                        return;
+                    }
+
                     if (['ArrowLeft', 'KeyA'].includes(e.code)) this.keys.left = false;
                     if (['ArrowRight', 'KeyD'].includes(e.code)) this.keys.right = false;
                     if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) this.keys.shoot = false;
@@ -1198,7 +1280,7 @@ require_once __DIR__ . '/config/db.php';
                     this.ctx.fillText('JUEGO EN PAUSA', this.width / 2, this.height / 2 - 10);
                     this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
                     this.ctx.fillStyle = '#94a3b8';
-                    this.ctx.fillText('Presiona P para continuar', this.width / 2, this.height / 2 + 20);
+                    this.ctx.fillText('Presiona P para continuar jugando', this.width / 2, this.height / 2 + 20);
                     this.ctx.textAlign = 'left';
                 }
 
@@ -1266,6 +1348,9 @@ require_once __DIR__ . '/config/db.php';
             const authPasswordInput  = document.getElementById('authPasswordInput');
             const btnAuthSubmit      = document.getElementById('btnAuthSubmit');
             const authErrorMsg       = document.getElementById('authErrorMsg');
+            const authSwitchHint     = document.getElementById('authSwitchHint');
+            const linkSwitchToRegister = document.getElementById('linkSwitchToRegister');
+            const btnTogglePwd       = document.getElementById('btnTogglePwd');
             const btnCloseAuth       = document.getElementById('btnCloseAuth');
 
             // Modal Puntuaciones
@@ -1315,7 +1400,6 @@ require_once __DIR__ . '/config/db.php';
                         localStorage.setItem('si_auth_user', authUsername);
                         syncAuthUI();
                     } else {
-                        // Token expirado o inválido
                         clearAuth();
                     }
                 })
@@ -1330,6 +1414,17 @@ require_once __DIR__ . '/config/db.php';
                 syncAuthUI();
             }
 
+            // Alternar ver/ocultar contraseña
+            btnTogglePwd.addEventListener('click', () => {
+                if (authPasswordInput.type === 'password') {
+                    authPasswordInput.type = 'text';
+                    btnTogglePwd.textContent = '🔒';
+                } else {
+                    authPasswordInput.type = 'password';
+                    btnTogglePwd.textContent = '👁️';
+                }
+            });
+
             // Gestión de pestañas Login / Registro
             function setAuthMode(mode) {
                 authMode = mode;
@@ -1339,23 +1434,30 @@ require_once __DIR__ . '/config/db.php';
                     tabRegister.classList.remove('active');
                     authModalTitle.innerHTML = '<span>👾</span> Iniciar Sesión';
                     btnAuthSubmit.textContent = 'Entrar a Jugar';
+                    authSwitchHint.innerHTML = '¿No tienes cuenta todavía? <a id="linkSwitchToRegister">Regístrate aquí</a>';
+                    document.getElementById('linkSwitchToRegister').addEventListener('click', () => setAuthMode('register'));
                 } else {
                     tabRegister.classList.add('active');
                     tabLogin.classList.remove('active');
                     authModalTitle.innerHTML = '<span>🚀</span> Crear Cuenta';
                     btnAuthSubmit.textContent = 'Registrar y Jugar';
+                    authSwitchHint.innerHTML = '¿Ya tienes una cuenta registrada? <a id="linkSwitchToLogin">Inicia sesión aquí</a>';
+                    document.getElementById('linkSwitchToLogin').addEventListener('click', () => setAuthMode('login'));
                 }
             }
 
             tabLogin.addEventListener('click', () => setAuthMode('login'));
             tabRegister.addEventListener('click', () => setAuthMode('register'));
+            if (linkSwitchToRegister) {
+                linkSwitchToRegister.addEventListener('click', () => setAuthMode('register'));
+            }
 
             function openAuthModal(defaultMode = 'login') {
                 setAuthMode(defaultMode);
                 authUsernameInput.value = authUsername || '';
                 authPasswordInput.value = '';
                 authModal.classList.add('active');
-                setTimeout(() => authUsernameInput.focus(), 100);
+                setTimeout(() => authUsernameInput.focus(), 150);
             }
 
             function closeAuthModal() {
@@ -1389,18 +1491,39 @@ require_once __DIR__ . '/config/db.php';
                         authToken = json.data.token;
                         authUsername = json.data.username;
 
-                        // Guardar en localStorage
                         localStorage.setItem('si_auth_token', authToken);
                         localStorage.setItem('si_auth_user', authUsername);
 
                         syncAuthUI();
                         closeAuthModal();
+
+                        // Si el juego estaba esperando, iniciarlo
+                        if (game.state === 'IDLE') {
+                            game.start();
+                        }
                     } else {
-                        authErrorMsg.textContent = json.message || 'Error de autenticación';
+                        // Error amigable con sugerencia automática
+                        let errorText = json.message || 'Error de autenticación';
+                        authErrorMsg.innerHTML = errorText;
+
+                        if (json.data && json.data.not_found) {
+                            authErrorMsg.innerHTML = `${errorText} <button type="button" id="btnAutoSwitchRegister">Crear cuenta con este nombre</button>`;
+                            document.getElementById('btnAutoSwitchRegister').addEventListener('click', () => {
+                                setAuthMode('register');
+                                authPasswordInput.focus();
+                            });
+                        } else if (json.data && json.data.user_exists) {
+                            authErrorMsg.innerHTML = `${errorText} <button type="button" id="btnAutoSwitchLogin">Iniciar sesión ahora</button>`;
+                            document.getElementById('btnAutoSwitchLogin').addEventListener('click', () => {
+                                setAuthMode('login');
+                                authPasswordInput.focus();
+                            });
+                        }
+
                         authErrorMsg.style.display = 'block';
                     }
                 } catch(err) {
-                    authErrorMsg.textContent = 'Error de conexión con el servidor';
+                    authErrorMsg.textContent = 'Error de conexión con el servidor. Verifica tu conexión.';
                     authErrorMsg.style.display = 'block';
                 } finally {
                     btnAuthSubmit.disabled = false;
@@ -1411,7 +1534,7 @@ require_once __DIR__ . '/config/db.php';
             // Manejador del juego
             const game = new SpaceInvaders('gameCanvas', {
                 onRequestStart: () => {
-                    // Si no está autenticado con Token, abrir login
+                    // Si no está autenticado, abrir modal
                     if (!authToken) {
                         openAuthModal('login');
                     } else {
@@ -1461,7 +1584,7 @@ require_once __DIR__ . '/config/db.php';
                         });
                         const json = await res.json();
                         if (json.success) {
-                            autoSavedNotice.innerHTML = `✅ ¡Puntuación guardada para <strong>${escapeHtml(json.data.username)}</strong> con Token! (Posición #${json.data.rank})`;
+                            autoSavedNotice.innerHTML = `✅ ¡Puntuación de <strong>${Number(score).toLocaleString()}</strong> guardada para <strong>${escapeHtml(json.data.username)}</strong>! (Posición #${json.data.rank})`;
                             autoSavedNotice.style.display = 'block';
                         }
                     } catch(err) {
@@ -1579,7 +1702,7 @@ require_once __DIR__ . '/config/db.php';
                 soundIcon.textContent = active ? '🔊' : '🔇';
             });
 
-            // Si es primera visita y no hay token guardado, invitar a iniciar sesión
+            // Si no hay token guardado, invitar a iniciar sesión de forma amigable
             if (!authToken) {
                 setTimeout(() => openAuthModal('login'), 350);
             }
