@@ -112,7 +112,7 @@ if ($action === 'register') {
         $checkStmt = $pdo->prepare("SELECT id FROM users WHERE LOWER(username) = LOWER(:u)");
         $checkStmt->execute([':u' => $username]);
         if ($checkStmt->fetch()) {
-            jsonOut(false, 'Ese nombre ya está registrado. ¿Deseas iniciar sesión?', ['user_exists' => true], 409);
+            jsonOut(false, 'Este nombre de usuario ya está en uso.', ['user_exists' => true], 409);
         }
 
         // Hashear contraseña con BCRYPT
@@ -161,12 +161,12 @@ if ($action === 'login') {
         $user = $stmt->fetch();
 
         if (!$user) {
-            jsonOut(false, 'El usuario no existe. Haz clic en "Crear Cuenta" para registrarte.', ['not_found' => true], 404);
+            jsonOut(false, 'Usuario no encontrado.', ['not_found' => true], 404);
         }
 
         // Validar contraseña
         if (!password_verify($password, $user['password_hash'])) {
-            jsonOut(false, 'Contraseña incorrecta. Por favor intenta de nuevo.', null, 401);
+            jsonOut(false, 'Contraseña incorrecta.', null, 401);
         }
 
         // Generar y actualizar Token JSON de sesión

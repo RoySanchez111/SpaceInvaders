@@ -1,7 +1,4 @@
 <?php
-/**
- * Space Invaders - Juego Web con Autenticación por Token JSON y Password HASH
- */
 require_once __DIR__ . '/config/db.php';
 ?>
 <!DOCTYPE html>
@@ -10,25 +7,28 @@ require_once __DIR__ . '/config/db.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders</title>
-    
-    <!-- Tipografía moderna y amigable -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #0d1017;
-            --card-bg: #161b26;
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent-coral: #ff5c5c;
-            --accent-amber: #f7b267;
-            --accent-mint: #38bdf8;
-            --accent-green: #34d399;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            --font-pixel: 'Press Start 2P', monospace;
+            --bg: #09090b;
+            --surface: #121215;
+            --surface-elevated: #18181c;
+            --surface-hover: #222228;
+            --border: #24242b;
+            --border-subtle: #1c1c22;
+            --text: #f4f4f5;
+            --text-muted: #8e8e99;
+            --text-dim: #52525b;
+            --primary: #f4f4f5;
+            --primary-fg: #09090b;
+            --accent: #10b981;
+            --amber: #f59e0b;
+            --danger: #f43f5e;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
         * {
@@ -38,180 +38,210 @@ require_once __DIR__ . '/config/db.php';
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: var(--font-main);
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
-                radial-gradient(circle at 100% 100%, rgba(255, 92, 92, 0.05) 0%, transparent 50%);
+            -webkit-font-smoothing: antialiased;
         }
 
-        .game-wrapper {
+        .app-shell {
             width: 100%;
             max-width: 680px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
 
-        /* BARRA SUPERIOR */
-        .header-bar {
+        /* HEADER */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 18px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-            flex-wrap: wrap;
-            gap: 10px;
+            padding: 10px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            gap: 12px;
         }
 
-        .game-logo {
+        .brand {
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            color: var(--text);
+            user-select: none;
         }
 
-        .game-logo span {
-            font-size: 1.5rem;
+        .brand svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+            flex-shrink: 0;
         }
 
-        .game-logo h1 {
-            font-family: var(--font-pixel);
-            font-size: 0.95rem;
-            color: #fff;
-            letter-spacing: 0.5px;
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .header-actions {
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            height: 34px;
+            padding: 0 12px;
+            border-radius: 7px;
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            flex-shrink: 0;
+        }
+
+        .btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            border-color: #32323c;
+        }
+
+        .btn-icon {
+            width: 34px;
+            padding: 0;
+        }
+
+        .btn-solid {
+            background: var(--primary);
+            color: var(--primary-fg);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .btn-solid:hover {
+            background: #dcdce0;
+            color: var(--primary-fg);
+            border-color: #dcdce0;
+        }
+
+        .btn-solid:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .user-chip {
             display: flex;
             align-items: center;
             gap: 8px;
+            height: 34px;
+            padding: 0 10px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text);
         }
 
-        /* BADGE DE USUARIO AUTENTICADO */
-        .user-pill {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            color: var(--accent-mint);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .user-chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
         }
 
-        .btn-logout {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.78rem;
-            cursor: pointer;
-            text-decoration: underline;
-            padding-left: 4px;
-        }
-
-        .btn-logout:hover {
-            color: #fff;
-        }
-
-        .btn-header {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-header:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .btn-header.highlight {
-            background: rgba(56, 189, 248, 0.15);
-            border-color: rgba(56, 189, 248, 0.35);
-            color: var(--accent-mint);
-        }
-
-        /* CONTENEDOR PRINCIPAL */
-        .arcade-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 18px;
+        /* MAIN BOARD */
+        .board {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
         }
 
-        /* HUD PUNTUACIÓN Y VIDAS */
-        .stats-bar {
-            width: 100%;
+        /* HUD */
+        .hud {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.25);
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: #0d0d10;
         }
 
-        .stat-item {
+        .hud-cell {
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 2px;
+            border-right: 1px solid var(--border-subtle);
         }
 
-        .stat-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--text-secondary);
+        .hud-cell:last-child {
+            border-right: none;
+        }
+
+        .hud-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-dim);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.06em;
         }
 
-        .stat-number {
-            font-family: var(--font-pixel);
-            font-size: 0.95rem;
-            color: #fff;
+        .hud-val {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
         }
 
-        .stat-number.amber { color: var(--accent-amber); }
-        .stat-number.mint { color: var(--accent-mint); }
-        .stat-number.lives { font-family: sans-serif; font-size: 0.9rem; }
+        .hud-val.amber { color: var(--amber); }
 
-        /* PANTALLA CANVAS */
-        .canvas-container {
+        .lives-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 20px;
+        }
+
+        .life-ship {
+            width: 16px;
+            height: 12px;
+            fill: var(--accent);
+            transition: opacity 0.2s;
+        }
+
+        .life-ship.lost {
+            fill: var(--text-dim);
+            opacity: 0.25;
+        }
+
+        /* CANVAS */
+        .viewport {
             width: 100%;
-            max-width: 640px;
             aspect-ratio: 4 / 3;
-            background: #080a10;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            background: #070709;
             position: relative;
         }
 
@@ -222,591 +252,617 @@ require_once __DIR__ . '/config/db.php';
             cursor: pointer;
         }
 
-        /* PIE DE CONTROLES */
-        .controls-footer {
-            width: 100%;
+        /* FOOTER BAR */
+        .bottombar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            padding: 10px 14px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
             gap: 12px;
-            padding-top: 4px;
         }
 
-        .instructions {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        .shortcuts {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 14px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
-        .key {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            padding: 2px 7px;
-            border-radius: 5px;
-            font-size: 0.78rem;
-            font-weight: 700;
+        .shortcut-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .btn-primary {
-            background: var(--accent-coral);
-            color: #fff;
-            border: none;
-            padding: 11px 22px;
-            border-radius: 9px;
-            font-family: var(--font-main);
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);
+        kbd {
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-bottom-width: 2px;
+            color: var(--text);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 600;
         }
 
-        .btn-primary:hover {
-            background: #ff4747;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 92, 92, 0.4);
-        }
-
-        /* =====================================================================
-           MODALES (OVERLAY Y VENTANAS)
-           ===================================================================== */
-        .modal-overlay {
+        /* MODALS */
+        .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(10, 12, 18, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 1000;
             padding: 16px;
         }
 
-        .modal-overlay.active {
-            display: flex !important;
+        .overlay.active {
+            display: flex;
         }
 
-        .modal-dialog {
-            background: #171c28;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            max-width: 440px;
+        .dialog {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
             width: 100%;
-            padding: 24px;
+            max-width: 390px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
-            animation: popIn 0.2s ease forwards;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
         }
 
-        @keyframes popIn {
-            from { transform: scale(0.94); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .dialog.wide {
+            max-width: 440px;
         }
 
-        .modal-header {
+        .dialog-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .modal-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .dialog-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
         }
 
         .btn-close {
-            background: none;
+            background: transparent;
             border: none;
-            color: var(--text-secondary);
-            font-size: 1.3rem;
+            color: var(--text-muted);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             cursor: pointer;
-            line-height: 1;
-            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-close:hover {
-            color: #fff;
+            background: var(--surface-hover);
+            color: var(--text);
         }
 
-        /* PESTAÑAS LOGIN / REGISTRO */
-        .auth-tabs {
+        .btn-close svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        /* TABS */
+        .segmented {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 10px;
-            padding: 4px;
-            gap: 4px;
+            background: #0b0b0e;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 3px;
         }
 
-        .auth-tab {
-            background: none;
+        .seg-btn {
+            background: transparent;
             border: none;
-            color: var(--text-secondary);
-            font-family: var(--font-main);
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 9px;
-            border-radius: 7px;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            padding: 7px 10px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.15s;
         }
 
-        .auth-tab.active {
-            background: rgba(255, 255, 255, 0.12);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        .seg-btn.active {
+            background: var(--surface-elevated);
+            color: var(--text);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
         }
 
-        .auth-form {
+        /* FORMS */
+        .form-stack {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
 
-        .form-group {
+        .field {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .form-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            letter-spacing: 0.3px;
+        .field label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
         }
 
-        .input-wrapper {
+        .control {
             position: relative;
             display: flex;
             align-items: center;
         }
 
-        .auth-input {
+        .input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            color: #fff;
-            padding: 11px 14px;
-            border-radius: 9px;
-            font-family: var(--font-main);
-            font-size: 0.98rem;
+            height: 38px;
+            background: #0b0b0e;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0 36px 0 12px;
+            border-radius: 7px;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
             outline: none;
-            transition: all 0.2s ease;
+            transition: border-color 0.15s;
         }
 
-        .auth-input:focus {
-            border-color: var(--accent-mint);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        .input:focus {
+            border-color: #52525b;
         }
 
-        .btn-toggle-pwd {
+        .eye-btn {
             position: absolute;
-            right: 10px;
+            right: 6px;
             background: none;
             border: none;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            color: var(--text-dim);
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
             cursor: pointer;
-            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .btn-toggle-pwd:hover {
-            color: #fff;
+        .eye-btn:hover {
+            color: var(--text-muted);
         }
 
-        .auth-error {
-            background: rgba(255, 92, 92, 0.15);
-            color: #ff7070;
-            border: 1px solid rgba(255, 92, 92, 0.35);
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .eye-btn svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .alert {
+            padding: 9px 12px;
+            border-radius: 7px;
+            font-size: 0.8125rem;
+            line-height: 1.4;
             display: none;
-            line-height: 1.4;
         }
 
-        .auth-error button {
+        .alert-error {
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            color: #fb7185;
+        }
+
+        .alert-error button {
             background: none;
             border: none;
-            color: var(--accent-mint);
+            color: var(--text);
             text-decoration: underline;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 0.8125rem;
             cursor: pointer;
-            font-size: 0.85rem;
             margin-top: 4px;
-            display: block;
+            display: inline-block;
         }
 
-        .auth-switch-hint {
-            font-size: 0.84rem;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-top: 2px;
+        .alert-ok {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: #34d399;
         }
 
-        .auth-switch-hint a {
-            color: var(--accent-mint);
-            font-weight: 700;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .auth-switch-hint a:hover {
-            text-decoration: underline;
-        }
-
-        /* CAJA DE PUNTAJE TRAS PARTIDA */
-        .score-banner {
-            background: rgba(247, 178, 103, 0.1);
-            border: 1px solid rgba(247, 178, 103, 0.3);
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
+        /* SETTINGS ACCOUNT ROW */
+        .account-bar {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .score-banner-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .score-banner-value {
-            font-family: var(--font-pixel);
-            font-size: 1.6rem;
-            color: var(--accent-amber);
-        }
-
-        .toast-msg {
-            background: rgba(52, 211, 153, 0.15);
-            color: var(--accent-green);
-            border: 1px solid rgba(52, 211, 153, 0.3);
-            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #0b0b0e;
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
-            font-size: 0.9rem;
+        }
+
+        .account-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8125rem;
             font-weight: 600;
-            text-align: center;
-            line-height: 1.4;
+            color: var(--text);
         }
 
-        /* TABLA DE POSICIONES */
-        .table-section-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--text-secondary);
+        .btn-text-danger {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 5px;
+        }
+
+        .btn-text-danger:hover {
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .section-caption {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* SCORE SUMMARY & LEADERBOARD */
+        .gameover-summary {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: #0b0b0e;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+        }
+
+        .gameover-summary span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 4px;
+            letter-spacing: 0.05em;
+            font-weight: 600;
         }
 
-        .scores-table-container {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
+        .gameover-summary strong {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            color: var(--amber);
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
             overflow: hidden;
-            max-height: 220px;
+            background: #0b0b0e;
+            max-height: 260px;
             overflow-y: auto;
         }
 
-        .clean-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
+            font-size: 0.8125rem;
         }
 
-        .clean-table th {
-            background: rgba(0, 0, 0, 0.35);
-            padding: 8px 12px;
+        th {
             text-align: left;
-            color: var(--text-secondary);
-            font-size: 0.78rem;
-            font-weight: 700;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .clean-table td {
             padding: 8px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border-subtle);
+            background: #0e0e12;
         }
 
-        .clean-table .col-pos { width: 45px; font-weight: 700; color: var(--text-secondary); }
-        .clean-table .col-pts { text-align: right; font-family: monospace; font-weight: 700; color: var(--accent-amber); }
-        .clean-table .col-time { text-align: right; color: var(--text-secondary); font-size: 0.78rem; width: 120px; }
-
-        .clean-table tr.top-1 td.col-name { color: var(--accent-amber); font-weight: 700; }
-        .clean-table tr.top-2 td.col-name { color: #e2e8f0; font-weight: 700; }
-        .clean-table tr.top-3 td.col-name { color: var(--accent-coral); font-weight: 700; }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 8px;
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #141418;
+            color: var(--text-muted);
         }
 
-        @media (max-width: 600px) {
-            .stats-bar { grid-template-columns: repeat(2, 1fr); }
-            .controls-footer { flex-direction: column; align-items: stretch; }
-            .btn-primary { width: 100%; }
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr.is-me td {
+            background: rgba(16, 185, 129, 0.06);
+            color: var(--text);
+        }
+
+        .col-rank {
+            width: 42px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        tr.rank-1 .col-rank, tr.rank-1 .col-player { color: var(--amber); font-weight: 600; }
+        tr.rank-2 .col-player, tr.rank-3 .col-player { color: var(--text); font-weight: 500; }
+
+        .col-score {
+            text-align: right;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .col-date {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            width: 115px;
+        }
+
+        @media (max-width: 560px) {
+            .hud { grid-template-columns: repeat(2, 1fr); }
+            .hud-cell:nth-child(2) { border-right: none; }
+            .hud-cell:nth-child(1), .hud-cell:nth-child(2) { border-bottom: 1px solid var(--border-subtle); }
+            .shortcuts { display: none; }
+            .bottombar .btn-solid { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <div class="game-wrapper">
-        
-        <!-- BARRA SUPERIOR -->
-        <header class="header-bar">
-            <div class="game-logo">
-                <span>👾</span>
-                <h1>SPACE INVADERS</h1>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h2v2H6V4zm10 0h2v2h-2V4zM4 6h16v4h2v6h-2v-4h-2v4h-4v2H10v-2H6v-4H4v4H2v-6h2V6zm4 2v2h2V8H8zm6 0v2h2V8h-2z"/>
+                </svg>
+                <span>SPACE INVADERS</span>
             </div>
 
-            <div class="header-actions">
-                <!-- Estado de Sesión con Token JSON -->
-                <div class="user-pill" id="userBadgeBox" style="display: none;">
-                    <span>👤</span>
-                    <span id="displayUsername">Usuario</span>
-                    <button type="button" class="btn-logout" id="btnLogout" title="Cerrar sesión">(Salir)</button>
+            <div class="nav-actions">
+                <div class="user-chip" id="userBadgeBox" style="display: none;">
+                    <span class="user-chip-dot"></span>
+                    <span id="displayUsername"></span>
                 </div>
-                <button type="button" class="btn-header highlight" id="btnLoginOpen" style="display: none;">
-                    🔑 Iniciar Sesión
+
+                <button type="button" class="btn btn-solid" id="btnLoginOpen" style="display: none;">
+                    Entrar
                 </button>
 
-                <button type="button" class="btn-header" id="btnToggleSound" title="Sonido">
-                    <span id="soundIcon">🔊</span>
+                <button type="button" class="btn" id="btnShowScores">
+                    <svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM4 6h3v3a3 3 0 0 1-3-3zm16 0h-3v3a3 3 0 0 0 3-3z"/></svg>
+                    <span>Ranking</span>
                 </button>
-                <button type="button" class="btn-header" id="btnShowScores">
-                    🏆 Puntuaciones
+
+                <button type="button" class="btn" id="btnSettings" title="Ajustes">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Ajustes</span>
                 </button>
-                <button type="button" class="btn-header" id="btnSettings" title="Ajustes de cuenta">
-                    ⚙️ Ajustes
+
+                <button type="button" class="btn btn-icon" id="btnToggleSound" title="Sonido">
+                    <svg id="soundIconOn" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                    <svg id="soundIconOff" viewBox="0 0 24 24" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
                 </button>
             </div>
         </header>
 
-        <!-- TARJETA DEL JUEGO -->
-        <main class="arcade-card">
-            
-            <!-- MARCADOR -->
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <span class="stat-label">Puntos</span>
-                    <span class="stat-number" id="hudScore">0</span>
+        <main class="board">
+            <div class="hud">
+                <div class="hud-cell">
+                    <span class="hud-label">Puntos</span>
+                    <span class="hud-val" id="hudScore">0</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Récord</span>
-                    <span class="stat-number amber" id="hudHiScore">0</span>
+                <div class="hud-cell">
+                    <span class="hud-label">Récord</span>
+                    <span class="hud-val amber" id="hudHiScore">0</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Vidas</span>
-                    <span class="stat-number lives" id="hudLives">🚀 🚀 🚀</span>
+                <div class="hud-cell">
+                    <span class="hud-label">Nivel</span>
+                    <span class="hud-val" id="hudLevel">1</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Nivel</span>
-                    <span class="stat-number mint" id="hudLevel">1</span>
+                <div class="hud-cell">
+                    <span class="hud-label">Vidas</span>
+                    <div class="lives-row" id="hudLives"></div>
                 </div>
             </div>
 
-            <!-- PANTALLA CANVAS -->
-            <div class="canvas-container">
+            <div class="viewport">
                 <canvas id="gameCanvas" width="640" height="480"></canvas>
             </div>
 
-            <!-- CONTROLES -->
-            <div class="controls-footer">
-                <div class="instructions">
-                    <span class="key">← →</span> o <span class="key">A D</span> Moverse
-                    <span>•</span>
-                    <span class="key">Espacio</span> Disparar
-                    <span>•</span>
-                    <span class="key">P</span> Pausa
+            <div class="bottombar">
+                <div class="shortcuts">
+                    <span class="shortcut-item"><kbd>←</kbd><kbd>→</kbd> Mover</span>
+                    <span class="shortcut-item"><kbd>Espacio</kbd> Disparar</span>
+                    <span class="shortcut-item"><kbd>P</kbd> Pausa</span>
                 </div>
 
-                <button type="button" class="btn-primary" id="btnPlayGame">
-                    Jugar Partida
+                <button type="button" class="btn btn-solid" id="btnPlayGame">
+                    Nueva partida
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: AUTENTICACIÓN -->
+    <div class="overlay" id="authModal">
+        <div class="dialog">
+            <div class="dialog-head">
+                <span class="dialog-title" id="authModalTitle">Acceso</span>
+                <button type="button" class="btn-close" id="btnCloseAuth" aria-label="Cerrar">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
 
-        </main>
-
-    </div>
-
-    <!-- =========================================================================
-         MODAL 1: AUTENTICACIÓN (LOGIN & REGISTRO ROBUSTO Y HUMANO)
-         ========================================================================= -->
-    <div class="modal-overlay" id="authModal">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <div class="modal-title" id="authModalTitle">
-                    <span>👾</span> Iniciar Sesión
-                </div>
-                <button type="button" class="btn-close" id="btnCloseAuth">✕</button>
+            <div class="segmented">
+                <button type="button" class="seg-btn active" id="tabLogin">Iniciar sesión</button>
+                <button type="button" class="seg-btn" id="tabRegister">Crear cuenta</button>
             </div>
 
-            <!-- Pestañas: Iniciar Sesión / Crear Cuenta -->
-            <div class="auth-tabs">
-                <button type="button" class="auth-tab active" id="tabLogin">Iniciar Sesión</button>
-                <button type="button" class="auth-tab" id="tabRegister">Crear Cuenta</button>
-            </div>
+            <div class="alert alert-error" id="authErrorMsg"></div>
 
-            <div class="auth-error" id="authErrorMsg"></div>
-
-            <form class="auth-form" id="authForm">
-                <div class="form-group">
-                    <label class="form-label" for="authUsernameInput">Nombre de Usuario</label>
-                    <input type="text" class="auth-input" id="authUsernameInput" placeholder="Ej. Alex" maxlength="25" required autocomplete="username">
+            <form class="form-stack" id="authForm">
+                <div class="field">
+                    <label for="authUsernameInput">Usuario</label>
+                    <input type="text" class="input" id="authUsernameInput" maxlength="25" required autocomplete="username">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="authPasswordInput">Contraseña</label>
-                    <div class="input-wrapper">
-                        <input type="password" class="auth-input" id="authPasswordInput" placeholder="Tu contraseña secreta" minlength="3" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-pwd" id="btnTogglePwd" title="Mostrar/Ocultar contraseña">👁️</button>
+                <div class="field">
+                    <label for="authPasswordInput">Contraseña</label>
+                    <div class="control">
+                        <input type="password" class="input" id="authPasswordInput" minlength="3" required autocomplete="current-password">
+                        <button type="button" class="eye-btn" id="btnTogglePwd" tabindex="-1">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary" id="btnAuthSubmit" style="width: 100%; margin-top: 4px;">
-                    Entrar a Jugar
+                <button type="submit" class="btn btn-solid" id="btnAuthSubmit" style="width: 100%; height: 38px; margin-top: 2px;">
+                    Continuar
                 </button>
-
-                <div class="auth-switch-hint" id="authSwitchHint">
-                    ¿No tienes cuenta todavía? <a id="linkSwitchToRegister">Regístrate aquí</a>
-                </div>
             </form>
         </div>
     </div>
 
-    <!-- =========================================================================
-         MODAL 2: FIN DE PARTIDA & TABLA DE PUNTUACIONES
-         ========================================================================= -->
-    <div class="modal-overlay" id="scoreModal">
-        <div class="modal-dialog">
-            
-            <div class="modal-header">
-                <div class="modal-title" id="modalHeading">
-                    <span>🏆</span> Tabla de Puntuaciones
-                </div>
-                <button type="button" class="btn-close" id="btnCloseModal">✕</button>
+    <!-- MODAL: RANKING / FIN DE PARTIDA -->
+    <div class="overlay" id="scoreModal">
+        <div class="dialog wide">
+            <div class="dialog-head">
+                <span class="dialog-title" id="modalHeading">Ranking</span>
+                <button type="button" class="btn-close" id="btnCloseModal" aria-label="Cerrar">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
 
-            <!-- Resumen de puntuación tras jugar -->
-            <div class="score-banner" id="scoreBannerBox">
-                <span class="score-banner-label">Puntuación Final</span>
-                <span class="score-banner-value" id="finalScoreVal">0</span>
+            <div class="gameover-summary" id="scoreBannerBox" style="display: none;">
+                <span>Puntuación</span>
+                <strong id="finalScoreVal">0</strong>
             </div>
 
-            <!-- Aviso de guardado automático con Token -->
-            <div class="toast-msg" id="autoSavedNotice" style="display: none;"></div>
+            <div class="alert alert-ok" id="autoSavedNotice"></div>
 
-            <!-- Tabla de Récords -->
-            <div class="table-section-title">Top 10 Jugadores</div>
-            <div class="scores-table-container">
-                <table class="clean-table">
+            <div class="table-wrap">
+                <table>
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th class="col-rank">#</th>
                             <th>Jugador</th>
                             <th style="text-align: right;">Puntos</th>
                             <th style="text-align: right;">Fecha</th>
                         </tr>
                     </thead>
                     <tbody id="scoresBody">
-                        <tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando...</td></tr>
+                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Cargando...</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn-primary" id="btnPlayAgain">
-                    Jugar de Nuevo
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-solid" id="btnPlayAgain">
+                    Jugar de nuevo
                 </button>
             </div>
-
         </div>
     </div>
 
-    <!-- =========================================================================
-         MODAL 3: AJUSTES (CAMBIAR CONTRASEÑA Y CUENTA)
-         ========================================================================= -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <span>⚙️</span> Ajustes
-                </div>
-                <button type="button" class="btn-close" id="btnCloseSettings">✕</button>
+    <!-- MODAL: AJUSTES -->
+    <div class="overlay" id="settingsModal">
+        <div class="dialog">
+            <div class="dialog-head">
+                <span class="dialog-title">Ajustes</span>
+                <button type="button" class="btn-close" id="btnCloseSettings" aria-label="Cerrar">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
 
-            <!-- Información de cuenta activa -->
-            <div class="user-pill" id="settingsUserBox" style="justify-content: space-between; width: 100%; padding: 10px 14px;">
-                <span style="display: flex; align-items: center; gap: 8px;">
-                    <span>👤</span>
-                    <span>Cuenta: <strong id="settingsUsernameLabel">Invitado</strong></span>
-                </span>
-                <span style="font-size: 0.78rem; color: var(--text-secondary);">Seguridad</span>
+            <div class="account-bar" id="settingsAccountBar" style="display: none;">
+                <div class="account-user">
+                    <span class="user-chip-dot"></span>
+                    <span id="settingsUsernameLabel"></span>
+                </div>
+                <button type="button" class="btn-text-danger" id="btnLogout">Cerrar sesión</button>
             </div>
 
-            <div class="table-section-title" style="margin-top: 2px;">🔒 Cambiar Contraseña</div>
+            <span class="section-caption">Cambiar contraseña</span>
 
-            <div class="auth-error" id="settingsErrorMsg"></div>
-            <div class="toast-msg" id="settingsSuccessMsg" style="display: none;"></div>
+            <div class="alert alert-error" id="settingsErrorMsg"></div>
+            <div class="alert alert-ok" id="settingsSuccessMsg"></div>
 
-            <form class="auth-form" id="changePwdForm">
-                <div class="form-group" id="settingsUsernameGroup" style="display: none;">
-                    <label class="form-label" for="settingsUsernameInput">Nombre de Usuario</label>
-                    <input type="text" class="auth-input" id="settingsUsernameInput" placeholder="Tu usuario registrado" maxlength="25" autocomplete="username">
+            <form class="form-stack" id="changePwdForm">
+                <div class="field" id="settingsUsernameGroup" style="display: none;">
+                    <label for="settingsUsernameInput">Usuario</label>
+                    <input type="text" class="input" id="settingsUsernameInput" maxlength="25" autocomplete="username">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="currentPasswordInput">Contraseña Actual</label>
-                    <div class="input-wrapper">
-                        <input type="password" class="auth-input" id="currentPasswordInput" placeholder="Ingresa tu contraseña actual" minlength="3" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-pwd" id="btnToggleCurrentPwd" title="Mostrar/Ocultar">👁️</button>
+                <div class="field">
+                    <label for="currentPasswordInput">Contraseña actual</label>
+                    <div class="control">
+                        <input type="password" class="input" id="currentPasswordInput" minlength="3" required autocomplete="current-password">
+                        <button type="button" class="eye-btn" id="btnToggleCurrentPwd" tabindex="-1">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="newPasswordInput">Nueva Contraseña</label>
-                    <div class="input-wrapper">
-                        <input type="password" class="auth-input" id="newPasswordInput" placeholder="Mínimo 3 caracteres" minlength="3" required autocomplete="new-password">
-                        <button type="button" class="btn-toggle-pwd" id="btnToggleNewPwd" title="Mostrar/Ocultar">👁️</button>
+                <div class="field">
+                    <label for="newPasswordInput">Nueva contraseña</label>
+                    <div class="control">
+                        <input type="password" class="input" id="newPasswordInput" minlength="3" required autocomplete="new-password">
+                        <button type="button" class="eye-btn" id="btnToggleNewPwd" tabindex="-1">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="confirmPasswordInput">Confirmar Nueva Contraseña</label>
-                    <div class="input-wrapper">
-                        <input type="password" class="auth-input" id="confirmPasswordInput" placeholder="Repite la nueva contraseña" minlength="3" required autocomplete="new-password">
-                        <button type="button" class="btn-toggle-pwd" id="btnToggleConfirmPwd" title="Mostrar/Ocultar">👁️</button>
+                <div class="field">
+                    <label for="confirmPasswordInput">Confirmar contraseña</label>
+                    <div class="control">
+                        <input type="password" class="input" id="confirmPasswordInput" minlength="3" required autocomplete="new-password">
+                        <button type="button" class="eye-btn" id="btnToggleConfirmPwd" tabindex="-1">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary" id="btnChangePwdSubmit" style="width: 100%; margin-top: 4px;">
-                    Actualizar Contraseña
+                <button type="submit" class="btn btn-solid" id="btnChangePwdSubmit" style="width: 100%; height: 38px; margin-top: 2px;">
+                    Guardar contraseña
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- =========================================================================
-         MOTOR DE JUEGO (SPACE INVADERS - SIN INTERCEPTAR TECLAS EN FORMULARIOS)
-         ========================================================================= -->
     <script>
         class SoundFX {
             constructor() {
@@ -832,14 +888,14 @@ require_once __DIR__ . '/config/db.php';
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                    osc.frequency.setValueAtTime(760, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(160, this.ctx.currentTime + 0.07);
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start();
-                    osc.stop(this.ctx.currentTime + 0.08);
+                    osc.stop(this.ctx.currentTime + 0.07);
                 } catch(e){}
             }
             pop() {
@@ -848,27 +904,27 @@ require_once __DIR__ . '/config/db.php';
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.12);
-                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(55, this.ctx.currentTime + 0.11);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.11);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start();
-                    osc.stop(this.ctx.currentTime + 0.12);
+                    osc.stop(this.ctx.currentTime + 0.11);
                 } catch(e){}
             }
             boom() {
                 if (this.muted || !this.ctx) return;
                 try {
-                    const dur = 0.25;
+                    const dur = 0.24;
                     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
                     const d = buf.getChannelData(0);
                     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
                     const noise = this.ctx.createBufferSource();
                     noise.buffer = buf;
                     const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
                     noise.connect(gain);
                     gain.connect(this.ctx.destination);
@@ -890,14 +946,14 @@ require_once __DIR__ . '/config/db.php';
                 this.score = 0;
                 this.lives = 3;
                 this.level = 1;
-                this.state = 'IDLE'; // IDLE, PLAYING, PAUSED, LEVEL_CLEAR, GAMEOVER
+                this.state = 'IDLE';
                 this.levelClearTimer = 0;
 
                 this.player = {
-                    w: 36,
-                    h: 18,
-                    x: this.width / 2 - 18,
-                    y: this.height - 38,
+                    w: 34,
+                    h: 16,
+                    x: this.width / 2 - 17,
+                    y: this.height - 36,
                     speed: 5.5,
                     isHit: false,
                     hitTimer: 0
@@ -920,15 +976,10 @@ require_once __DIR__ . '/config/db.php';
             }
 
             initControls() {
-                // CORRECCIÓN CRÍTICA: NO interceptar teclas si el usuario está escribiendo en un input o si hay un modal abierto
                 window.addEventListener('keydown', (e) => {
                     const tag = e.target.tagName;
-                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-                        return; // Permitir escribir 'a', 'd', 'w', espacio y flechas sin restricciones
-                    }
-                    if (document.querySelector('.modal-overlay.active')) {
-                        return;
-                    }
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    if (document.querySelector('.overlay.active')) return;
 
                     if (['ArrowLeft', 'KeyA'].includes(e.code)) { this.keys.left = true; e.preventDefault(); }
                     if (['ArrowRight', 'KeyD'].includes(e.code)) { this.keys.right = true; e.preventDefault(); }
@@ -936,11 +987,8 @@ require_once __DIR__ . '/config/db.php';
                         this.keys.shoot = true;
                         e.preventDefault();
                         if (this.state === 'IDLE') {
-                            if (this.callbacks.onRequestStart) {
-                                this.callbacks.onRequestStart();
-                            } else {
-                                this.start();
-                            }
+                            if (this.callbacks.onRequestStart) this.callbacks.onRequestStart();
+                            else this.start();
                         }
                     }
                     if (e.code === 'KeyP') this.togglePause();
@@ -948,12 +996,8 @@ require_once __DIR__ . '/config/db.php';
 
                 window.addEventListener('keyup', (e) => {
                     const tag = e.target.tagName;
-                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-                        return;
-                    }
-                    if (document.querySelector('.modal-overlay.active')) {
-                        return;
-                    }
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    if (document.querySelector('.overlay.active')) return;
 
                     if (['ArrowLeft', 'KeyA'].includes(e.code)) this.keys.left = false;
                     if (['ArrowRight', 'KeyD'].includes(e.code)) this.keys.right = false;
@@ -963,11 +1007,8 @@ require_once __DIR__ . '/config/db.php';
                 this.canvas.addEventListener('click', () => {
                     this.sound.init();
                     if (this.state === 'IDLE') {
-                        if (this.callbacks.onRequestStart) {
-                            this.callbacks.onRequestStart();
-                        } else {
-                            this.start();
-                        }
+                        if (this.callbacks.onRequestStart) this.callbacks.onRequestStart();
+                        else this.start();
                     }
                 });
             }
@@ -978,21 +1019,18 @@ require_once __DIR__ . '/config/db.php';
                 const cols = 8;
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
-                        let type = 'bottom';
-                        let pts = 10;
-                        let color = '#38bdf8';
-
-                        if (r === 0) { type = 'top'; pts = 30; color = '#ff5c5c'; }
-                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#f7b267'; }
+                        let type = 'bottom', pts = 10, color = '#a1a1aa';
+                        if (r === 0) { type = 'top'; pts = 30; color = '#f43f5e'; }
+                        else if (r === 1 || r === 2) { type = 'mid'; pts = 20; color = '#f59e0b'; }
 
                         this.aliens.push({
                             x: 64 + c * 48,
                             y: 54 + r * 34,
-                            w: 28,
-                            h: 20,
-                            type: type,
-                            pts: pts,
-                            color: color,
+                            w: 26,
+                            h: 18,
+                            type,
+                            pts,
+                            color,
                             alive: true
                         });
                     }
@@ -1009,7 +1047,7 @@ require_once __DIR__ . '/config/db.php';
 
                 for (let i = 0; i < count; i++) {
                     const bx = gap + i * (bWidth + gap);
-                    const by = this.height - 95;
+                    const by = this.height - 92;
                     for (let r = 0; r < 4; r++) {
                         for (let c = 0; c < 7; c++) {
                             if (r === 3 && (c >= 2 && c <= 4)) continue;
@@ -1031,7 +1069,7 @@ require_once __DIR__ . '/config/db.php';
                 this.level = 1;
                 this.bullets = [];
                 this.bombs = [];
-                this.player.x = this.width / 2 - 18;
+                this.player.x = this.width / 2 - 17;
                 this.initBunkers();
                 this.initAliens();
                 if (this.callbacks.onScoreUpdate) {
@@ -1076,25 +1114,22 @@ require_once __DIR__ . '/config/db.php';
 
                 if (this.state !== 'PLAYING') return;
 
-                // 1. Mover Jugador
-                if (this.keys.left && this.player.x > 10) this.player.x -= this.player.speed;
-                if (this.keys.right && this.player.x < this.width - this.player.w - 10) this.player.x += this.player.speed;
+                if (this.keys.left && this.player.x > 12) this.player.x -= this.player.speed;
+                if (this.keys.right && this.player.x < this.width - this.player.w - 12) this.player.x += this.player.speed;
 
-                // 2. Disparar
                 if (this.shootCooldown > 0) this.shootCooldown--;
                 if (this.keys.shoot && this.shootCooldown === 0 && this.bullets.length < 2) {
                     this.bullets.push({
-                        x: this.player.x + this.player.w / 2 - 2,
-                        y: this.player.y - 4,
-                        w: 4,
-                        h: 12,
-                        vy: -8
+                        x: this.player.x + this.player.w / 2 - 1.5,
+                        y: this.player.y - 6,
+                        w: 3,
+                        h: 10,
+                        vy: -8.5
                     });
-                    this.shootCooldown = 15;
+                    this.shootCooldown = 14;
                     this.sound.laser();
                 }
 
-                // 3. Proyectiles
                 let allAliensKilled = false;
 
                 for (let i = this.bullets.length - 1; i >= 0; i--) {
@@ -1107,7 +1142,6 @@ require_once __DIR__ . '/config/db.php';
                         continue;
                     }
 
-                    // Bunkers
                     let hitBunker = false;
                     for (let j = this.bunkers.length - 1; j >= 0; j--) {
                         const bk = this.bunkers[j];
@@ -1121,7 +1155,6 @@ require_once __DIR__ . '/config/db.php';
                     }
                     if (hitBunker) continue;
 
-                    // Invasores
                     for (let k = 0; k < this.aliens.length; k++) {
                         const a = this.aliens[k];
                         if (a.alive && b.x < a.x + a.w && b.x + b.w > a.x && b.y < a.y + a.h && b.y + b.h > a.y) {
@@ -1137,9 +1170,7 @@ require_once __DIR__ . '/config/db.php';
                             const remaining = this.aliens.filter(x => x.alive).length;
                             this.alienSpeed = Math.min(4.5, 0.8 + (this.level * 0.2) + ((32 - remaining) * 0.08));
 
-                            if (remaining === 0) {
-                                allAliensKilled = true;
-                            }
+                            if (remaining === 0) allAliensKilled = true;
                             break;
                         }
                     }
@@ -1151,17 +1182,16 @@ require_once __DIR__ . '/config/db.php';
                     this.bullets = [];
                     this.bombs = [];
                     this.state = 'LEVEL_CLEAR';
-                    this.levelClearTimer = 50;
+                    this.levelClearTimer = 45;
                     return;
                 }
 
-                // 4. Mover Invasores
                 let wallHit = false;
                 const aliveList = this.aliens.filter(a => a.alive);
 
                 for (const a of aliveList) {
                     a.x += this.alienDir * this.alienSpeed;
-                    if (a.x + a.w > this.width - 12 || a.x < 12) wallHit = true;
+                    if (a.x + a.w > this.width - 14 || a.x < 14) wallHit = true;
                     if (a.y + a.h >= this.player.y) {
                         this.gameOver();
                         return;
@@ -1173,21 +1203,19 @@ require_once __DIR__ . '/config/db.php';
                     for (const a of aliveList) a.y += 14;
                 }
 
-                // 5. Bombas alien
                 this.dropTimer++;
-                if (this.dropTimer > Math.max(30, 80 - (this.level * 8)) && aliveList.length > 0) {
+                if (this.dropTimer > Math.max(28, 78 - (this.level * 8)) && aliveList.length > 0) {
                     this.dropTimer = 0;
                     const shooter = aliveList[Math.floor(Math.random() * aliveList.length)];
                     this.bombs.push({
-                        x: shooter.x + shooter.w / 2 - 2,
+                        x: shooter.x + shooter.w / 2 - 1.5,
                         y: shooter.y + shooter.h,
-                        w: 4,
-                        h: 10,
+                        w: 3,
+                        h: 9,
                         vy: 3.5 + (this.level * 0.3)
                     });
                 }
 
-                // 6. Mover bombas
                 for (let i = this.bombs.length - 1; i >= 0; i--) {
                     const bm = this.bombs[i];
                     if (!bm) continue;
@@ -1198,7 +1226,6 @@ require_once __DIR__ . '/config/db.php';
                         continue;
                     }
 
-                    // Bunkers
                     let hitBk = false;
                     for (let j = this.bunkers.length - 1; j >= 0; j--) {
                         const bk = this.bunkers[j];
@@ -1212,12 +1239,10 @@ require_once __DIR__ . '/config/db.php';
                     }
                     if (hitBk) continue;
 
-                    // Jugador
                     if (bm.x < this.player.x + this.player.w &&
                         bm.x + bm.w > this.player.x &&
                         bm.y < this.player.y + this.player.h &&
                         bm.y + bm.h > this.player.y) {
-                        
                         this.bombs.splice(i, 1);
                         this.lives--;
                         this.sound.boom();
@@ -1241,127 +1266,95 @@ require_once __DIR__ . '/config/db.php';
             }
 
             render() {
-                this.ctx.fillStyle = '#080a10';
+                this.ctx.fillStyle = '#070709';
                 this.ctx.fillRect(0, 0, this.width, this.height);
 
-                // Estrellas
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-                for (let s = 0; s < 30; s++) {
-                    const sx = (s * 89) % this.width;
-                    const sy = (s * 47) % this.height;
-                    this.ctx.fillRect(sx, sy, 2, 2);
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                for (let s = 0; s < 28; s++) {
+                    const sx = (s * 97) % this.width;
+                    const sy = (s * 53) % this.height;
+                    this.ctx.fillRect(sx, sy, 1.5, 1.5);
                 }
 
-                // Bunkers
                 for (const bk of this.bunkers) {
-                    const alpha = bk.hp === 3 ? 0.9 : (bk.hp === 2 ? 0.6 : 0.35);
-                    this.ctx.fillStyle = `rgba(52, 211, 153, ${alpha})`;
-                    this.ctx.fillRect(bk.x, bk.y, bk.w, bk.h);
+                    const alpha = bk.hp === 3 ? 0.85 : (bk.hp === 2 ? 0.5 : 0.25);
+                    this.ctx.fillStyle = `rgba(16, 185, 129, ${alpha})`;
+                    this.ctx.fillRect(bk.x, bk.y, bk.w - 1, bk.h - 1);
                 }
 
-                // Invasores
-                const step = Math.floor(Date.now() / 400) % 2;
+                const step = Math.floor(Date.now() / 420) % 2;
                 for (const a of this.aliens) {
                     if (!a.alive) continue;
                     this.ctx.fillStyle = a.color;
 
                     if (a.type === 'top') {
-                        this.ctx.fillRect(a.x + 6, a.y + 2, a.w - 12, a.h - 8);
+                        this.ctx.fillRect(a.x + 5, a.y + 2, a.w - 10, a.h - 7);
                         if (step === 0) {
-                            this.ctx.fillRect(a.x + 2, a.y + a.h - 6, 4, 6);
-                            this.ctx.fillRect(a.x + a.w - 6, a.y + a.h - 6, 4, 6);
+                            this.ctx.fillRect(a.x + 2, a.y + a.h - 5, 4, 5);
+                            this.ctx.fillRect(a.x + a.w - 6, a.y + a.h - 5, 4, 5);
                         } else {
-                            this.ctx.fillRect(a.x + 8, a.y + a.h - 6, 4, 6);
-                            this.ctx.fillRect(a.x + a.w - 12, a.y + a.h - 6, 4, 6);
+                            this.ctx.fillRect(a.x + 7, a.y + a.h - 5, 4, 5);
+                            this.ctx.fillRect(a.x + a.w - 11, a.y + a.h - 5, 4, 5);
                         }
                     } else if (a.type === 'mid') {
-                        this.ctx.fillRect(a.x + 4, a.y + 3, a.w - 8, a.h - 7);
-                        this.ctx.fillRect(a.x, a.y + (step === 0 ? 6 : 9), 4, 6);
-                        this.ctx.fillRect(a.x + a.w - 4, a.y + (step === 0 ? 6 : 9), 4, 6);
+                        this.ctx.fillRect(a.x + 4, a.y + 3, a.w - 8, a.h - 6);
+                        this.ctx.fillRect(a.x, a.y + (step === 0 ? 5 : 8), 3, 5);
+                        this.ctx.fillRect(a.x + a.w - 3, a.y + (step === 0 ? 5 : 8), 3, 5);
                     } else {
-                        this.ctx.fillRect(a.x + 5, a.y + 3, a.w - 10, a.h - 6);
-                        this.ctx.fillRect(a.x + (step === 0 ? 3 : 6), a.y + a.h - 5, 5, 5);
-                        this.ctx.fillRect(a.x + a.w - (step === 0 ? 8 : 11), a.y + a.h - 5, 5, 5);
+                        this.ctx.fillRect(a.x + 4, a.y + 3, a.w - 8, a.h - 6);
+                        this.ctx.fillRect(a.x + (step === 0 ? 3 : 6), a.y + a.h - 4, 4, 4);
+                        this.ctx.fillRect(a.x + a.w - (step === 0 ? 7 : 10), a.y + a.h - 4, 4, 4);
                     }
 
-                    // Ojos
-                    this.ctx.fillStyle = '#080a10';
-                    this.ctx.fillRect(a.x + 8, a.y + 6, 3, 3);
-                    this.ctx.fillRect(a.x + a.w - 11, a.y + 6, 3, 3);
+                    this.ctx.fillStyle = '#070709';
+                    this.ctx.fillRect(a.x + 7, a.y + 6, 3, 3);
+                    this.ctx.fillRect(a.x + a.w - 10, a.y + 6, 3, 3);
                 }
 
-                // Proyectiles
-                this.ctx.fillStyle = '#38bdf8';
+                this.ctx.fillStyle = '#f4f4f5';
                 for (const b of this.bullets) this.ctx.fillRect(b.x, b.y, b.w, b.h);
 
-                // Bombas alien
-                this.ctx.fillStyle = '#ff5c5c';
+                this.ctx.fillStyle = '#f43f5e';
                 for (const bm of this.bombs) this.ctx.fillRect(bm.x, bm.y, bm.w, bm.h);
 
-                // Cañón
                 if (!this.player.isHit || Math.floor(Date.now() / 80) % 2 === 0) {
-                    this.ctx.fillStyle = '#34d399';
+                    this.ctx.fillStyle = '#10b981';
                     const x = this.player.x, y = this.player.y, w = this.player.w, h = this.player.h;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x + w / 2, y);
-                    this.ctx.lineTo(x + w / 2 + 3, y + 5);
-                    this.ctx.lineTo(x + w - 4, y + 5);
-                    this.ctx.lineTo(x + w, y + h);
-                    this.ctx.lineTo(x, y + h);
-                    this.ctx.lineTo(x + 4, y + 5);
-                    this.ctx.lineTo(x + w / 2 - 3, y + 5);
-                    this.ctx.closePath();
-                    this.ctx.fill();
+                    this.ctx.fillRect(x, y + 6, w, h - 6);
+                    this.ctx.fillRect(x + 6, y + 3, w - 12, 3);
+                    this.ctx.fillRect(x + w / 2 - 2, y, 4, 3);
                 }
 
-                // Línea inferior
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-                this.ctx.lineWidth = 1;
-                this.ctx.beginPath();
-                this.ctx.moveTo(10, this.height - 14);
-                this.ctx.lineTo(this.width - 10, this.height - 14);
-                this.ctx.stroke();
-
-                // Nivel superado
                 if (this.state === 'LEVEL_CLEAR') {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    this.ctx.fillStyle = 'rgba(7, 7, 9, 0.75)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
-                    this.ctx.fillStyle = '#34d399';
-                    this.ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillStyle = '#10b981';
+                    this.ctx.font = '600 18px Inter, sans-serif';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('¡OLEADA SUPERADA!', this.width / 2, this.height / 2 - 10);
-                    this.ctx.fillStyle = '#f7b267';
-                    this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
-                    this.ctx.fillText('+500 Puntos Bonus', this.width / 2, this.height / 2 + 18);
+                    this.ctx.fillText(`NIVEL ${this.level} COMPLETADO`, this.width / 2, this.height / 2 - 6);
+                    this.ctx.fillStyle = '#8e8e99';
+                    this.ctx.font = '500 13px "JetBrains Mono", monospace';
+                    this.ctx.fillText('+500 PTS', this.width / 2, this.height / 2 + 18);
                     this.ctx.textAlign = 'left';
                 }
 
-                // Pausa
                 if (this.state === 'PAUSED') {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                    this.ctx.fillStyle = 'rgba(7, 7, 9, 0.78)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
-                    this.ctx.fillStyle = '#f7b267';
-                    this.ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillStyle = '#f4f4f5';
+                    this.ctx.font = '600 18px Inter, sans-serif';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('JUEGO EN PAUSA', this.width / 2, this.height / 2 - 10);
-                    this.ctx.font = '14px "Plus Jakarta Sans", sans-serif';
-                    this.ctx.fillStyle = '#94a3b8';
-                    this.ctx.fillText('Presiona P para continuar jugando', this.width / 2, this.height / 2 + 20);
+                    this.ctx.fillText('PAUSA', this.width / 2, this.height / 2);
                     this.ctx.textAlign = 'left';
                 }
 
-                // Inicial
                 if (this.state === 'IDLE') {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                    this.ctx.fillStyle = 'rgba(7, 7, 9, 0.74)';
                     this.ctx.fillRect(0, 0, this.width, this.height);
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
+                    this.ctx.fillStyle = '#f4f4f5';
+                    this.ctx.font = '600 16px Inter, sans-serif';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('¿Listo para jugar?', this.width / 2, this.height / 2 - 20);
-
-                    this.ctx.fillStyle = '#ff5c5c';
-                    this.ctx.font = '15px "Plus Jakarta Sans", sans-serif';
-                    this.ctx.fillText('Haz clic o presiona Espacio para comenzar', this.width / 2, this.height / 2 + 15);
+                    this.ctx.fillText('Presiona Espacio o haz clic para iniciar', this.width / 2, this.height / 2);
                     this.ctx.textAlign = 'left';
                 }
             }
@@ -1384,9 +1377,6 @@ require_once __DIR__ . '/config/db.php';
             }
         }
 
-        // =====================================================================
-        // CONTROLADOR DE PÁGINA, TOKEN AUTH Y GUARDADO AUTOMÁTICO
-        // =====================================================================
         document.addEventListener('DOMContentLoaded', () => {
             const hudScore       = document.getElementById('hudScore');
             const hudHiScore     = document.getElementById('hudHiScore');
@@ -1396,43 +1386,39 @@ require_once __DIR__ . '/config/db.php';
             const btnPlayGame    = document.getElementById('btnPlayGame');
             const btnShowScores  = document.getElementById('btnShowScores');
             const btnToggleSound = document.getElementById('btnToggleSound');
-            const soundIcon      = document.getElementById('soundIcon');
+            const soundIconOn    = document.getElementById('soundIconOn');
+            const soundIconOff   = document.getElementById('soundIconOff');
 
-            // Autenticación
-            const userBadgeBox       = document.getElementById('userBadgeBox');
-            const displayUsername    = document.getElementById('displayUsername');
-            const btnLogout          = document.getElementById('btnLogout');
-            const btnLoginOpen       = document.getElementById('btnLoginOpen');
+            const userBadgeBox    = document.getElementById('userBadgeBox');
+            const displayUsername = document.getElementById('displayUsername');
+            const btnLogout       = document.getElementById('btnLogout');
+            const btnLoginOpen    = document.getElementById('btnLoginOpen');
 
-            // Modal Autenticación
-            const authModal          = document.getElementById('authModal');
-            const authModalTitle     = document.getElementById('authModalTitle');
-            const tabLogin           = document.getElementById('tabLogin');
-            const tabRegister        = document.getElementById('tabRegister');
-            const authForm           = document.getElementById('authForm');
-            const authUsernameInput  = document.getElementById('authUsernameInput');
-            const authPasswordInput  = document.getElementById('authPasswordInput');
-            const btnAuthSubmit      = document.getElementById('btnAuthSubmit');
-            const authErrorMsg       = document.getElementById('authErrorMsg');
-            const authSwitchHint     = document.getElementById('authSwitchHint');
-            const linkSwitchToRegister = document.getElementById('linkSwitchToRegister');
-            const btnTogglePwd       = document.getElementById('btnTogglePwd');
-            const btnCloseAuth       = document.getElementById('btnCloseAuth');
+            const authModal         = document.getElementById('authModal');
+            const authModalTitle    = document.getElementById('authModalTitle');
+            const tabLogin          = document.getElementById('tabLogin');
+            const tabRegister       = document.getElementById('tabRegister');
+            const authForm          = document.getElementById('authForm');
+            const authUsernameInput = document.getElementById('authUsernameInput');
+            const authPasswordInput = document.getElementById('authPasswordInput');
+            const btnAuthSubmit     = document.getElementById('btnAuthSubmit');
+            const authErrorMsg      = document.getElementById('authErrorMsg');
+            const btnTogglePwd      = document.getElementById('btnTogglePwd');
+            const btnCloseAuth      = document.getElementById('btnCloseAuth');
 
-            // Modal Puntuaciones
-            const scoreModal         = document.getElementById('scoreModal');
-            const modalHeading       = document.getElementById('modalHeading');
-            const scoreBannerBox     = document.getElementById('scoreBannerBox');
-            const finalScoreVal      = document.getElementById('finalScoreVal');
-            const autoSavedNotice    = document.getElementById('autoSavedNotice');
-            const scoresBody         = document.getElementById('scoresBody');
-            const btnPlayAgain       = document.getElementById('btnPlayAgain');
-            const btnCloseModal      = document.getElementById('btnCloseModal');
+            const scoreModal      = document.getElementById('scoreModal');
+            const modalHeading    = document.getElementById('modalHeading');
+            const scoreBannerBox  = document.getElementById('scoreBannerBox');
+            const finalScoreVal   = document.getElementById('finalScoreVal');
+            const autoSavedNotice = document.getElementById('autoSavedNotice');
+            const scoresBody      = document.getElementById('scoresBody');
+            const btnPlayAgain    = document.getElementById('btnPlayAgain');
+            const btnCloseModal   = document.getElementById('btnCloseModal');
 
-            // Modal Ajustes (Cambiar Contraseña)
             const btnSettings           = document.getElementById('btnSettings');
             const settingsModal         = document.getElementById('settingsModal');
             const btnCloseSettings      = document.getElementById('btnCloseSettings');
+            const settingsAccountBar    = document.getElementById('settingsAccountBar');
             const settingsUsernameLabel = document.getElementById('settingsUsernameLabel');
             const settingsUsernameGroup = document.getElementById('settingsUsernameGroup');
             const settingsUsernameInput = document.getElementById('settingsUsernameInput');
@@ -1447,15 +1433,23 @@ require_once __DIR__ . '/config/db.php';
             const settingsErrorMsg      = document.getElementById('settingsErrorMsg');
             const settingsSuccessMsg    = document.getElementById('settingsSuccessMsg');
 
-            let authMode = 'login'; // 'login' o 'register'
+            let authMode = 'login';
             let authToken = localStorage.getItem('si_auth_token') || '';
             let authUsername = localStorage.getItem('si_auth_user') || '';
 
-            let currentScore = 0;
             let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
             hudHiScore.textContent = record.toLocaleString();
 
-            // Sincronizar UI de usuario
+            function renderLives(lives) {
+                let html = '';
+                for (let i = 0; i < 3; i++) {
+                    const lost = i >= lives ? 'lost' : '';
+                    html += `<svg class="life-ship ${lost}" viewBox="0 0 16 12"><path d="M7 0h2v3h4v3h3v6H0V6h3V3h4V0z"/></svg>`;
+                }
+                hudLives.innerHTML = html;
+            }
+            renderLives(3);
+
             function syncAuthUI() {
                 if (authToken && authUsername) {
                     displayUsername.textContent = authUsername;
@@ -1468,7 +1462,6 @@ require_once __DIR__ . '/config/db.php';
             }
             syncAuthUI();
 
-            // Verificar validez del Token al cargar
             if (authToken) {
                 fetch('api.php?action=verify_token', {
                     method: 'POST',
@@ -1498,69 +1491,58 @@ require_once __DIR__ . '/config/db.php';
                 syncAuthUI();
             }
 
-            // Alternar ver/ocultar contraseña
-            btnTogglePwd.addEventListener('click', () => {
-                if (authPasswordInput.type === 'password') {
-                    authPasswordInput.type = 'text';
-                    btnTogglePwd.textContent = '🔒';
-                } else {
-                    authPasswordInput.type = 'password';
-                    btnTogglePwd.textContent = '👁️';
-                }
-            });
+            function bindPasswordEye(btn, input) {
+                if (!btn || !input) return;
+                btn.addEventListener('click', () => {
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                });
+            }
 
-            // Gestión de pestañas Login / Registro
+            bindPasswordEye(btnTogglePwd, authPasswordInput);
+            bindPasswordEye(btnToggleCurrentPwd, currentPasswordInput);
+            bindPasswordEye(btnToggleNewPwd, newPasswordInput);
+            bindPasswordEye(btnToggleConfirmPwd, confirmPasswordInput);
+
             function setAuthMode(mode) {
                 authMode = mode;
                 authErrorMsg.style.display = 'none';
                 if (mode === 'login') {
                     tabLogin.classList.add('active');
                     tabRegister.classList.remove('active');
-                    authModalTitle.innerHTML = '<span>👾</span> Iniciar Sesión';
-                    btnAuthSubmit.textContent = 'Entrar a Jugar';
-                    authSwitchHint.innerHTML = '¿No tienes cuenta todavía? <a id="linkSwitchToRegister">Regístrate aquí</a>';
-                    document.getElementById('linkSwitchToRegister').addEventListener('click', () => setAuthMode('register'));
+                    authModalTitle.textContent = 'Iniciar sesión';
+                    btnAuthSubmit.textContent = 'Entrar';
                 } else {
                     tabRegister.classList.add('active');
                     tabLogin.classList.remove('active');
-                    authModalTitle.innerHTML = '<span>🚀</span> Crear Cuenta';
-                    btnAuthSubmit.textContent = 'Registrar y Jugar';
-                    authSwitchHint.innerHTML = '¿Ya tienes una cuenta registrada? <a id="linkSwitchToLogin">Inicia sesión aquí</a>';
-                    document.getElementById('linkSwitchToLogin').addEventListener('click', () => setAuthMode('login'));
+                    authModalTitle.textContent = 'Crear cuenta';
+                    btnAuthSubmit.textContent = 'Crear cuenta';
                 }
             }
 
             tabLogin.addEventListener('click', () => setAuthMode('login'));
             tabRegister.addEventListener('click', () => setAuthMode('register'));
-            if (linkSwitchToRegister) {
-                linkSwitchToRegister.addEventListener('click', () => setAuthMode('register'));
-            }
 
             function openAuthModal(defaultMode = 'login') {
                 setAuthMode(defaultMode);
                 authUsernameInput.value = authUsername || '';
                 authPasswordInput.value = '';
                 authModal.classList.add('active');
-                setTimeout(() => authUsernameInput.focus(), 150);
+                setTimeout(() => authUsernameInput.focus(), 80);
             }
 
             function closeAuthModal() {
                 authModal.classList.remove('active');
             }
 
-            // Enviar Formulario de Autenticación
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 authErrorMsg.style.display = 'none';
 
                 const username = authUsernameInput.value.trim();
                 const password = authPasswordInput.value;
-
                 if (!username || !password) return;
 
                 btnAuthSubmit.disabled = true;
-                btnAuthSubmit.textContent = 'Verificando...';
-
                 const endpoint = authMode === 'register' ? 'api.php?action=register' : 'api.php?action=login';
 
                 try {
@@ -1574,30 +1556,25 @@ require_once __DIR__ . '/config/db.php';
                     if (json.success && json.data && json.data.token) {
                         authToken = json.data.token;
                         authUsername = json.data.username;
-
                         localStorage.setItem('si_auth_token', authToken);
                         localStorage.setItem('si_auth_user', authUsername);
 
                         syncAuthUI();
                         closeAuthModal();
 
-                        // Si el juego estaba esperando, iniciarlo
-                        if (game.state === 'IDLE') {
-                            game.start();
-                        }
+                        if (game.state === 'IDLE') game.start();
                     } else {
-                        // Error amigable con sugerencia automática
-                        let errorText = json.message || 'Error de autenticación';
-                        authErrorMsg.innerHTML = errorText;
+                        const errorText = json.message || 'Error de autenticación';
+                        authErrorMsg.innerHTML = escapeHtml(errorText);
 
                         if (json.data && json.data.not_found) {
-                            authErrorMsg.innerHTML = `${errorText} <button type="button" id="btnAutoSwitchRegister">Crear cuenta con este nombre</button>`;
+                            authErrorMsg.innerHTML += `<br><button type="button" id="btnAutoSwitchRegister">Crear cuenta con este usuario</button>`;
                             document.getElementById('btnAutoSwitchRegister').addEventListener('click', () => {
                                 setAuthMode('register');
                                 authPasswordInput.focus();
                             });
                         } else if (json.data && json.data.user_exists) {
-                            authErrorMsg.innerHTML = `${errorText} <button type="button" id="btnAutoSwitchLogin">Iniciar sesión ahora</button>`;
+                            authErrorMsg.innerHTML += `<br><button type="button" id="btnAutoSwitchLogin">Iniciar sesión</button>`;
                             document.getElementById('btnAutoSwitchLogin').addEventListener('click', () => {
                                 setAuthMode('login');
                                 authPasswordInput.focus();
@@ -1606,33 +1583,23 @@ require_once __DIR__ . '/config/db.php';
 
                         authErrorMsg.style.display = 'block';
                     }
-                } catch(err) {
-                    authErrorMsg.textContent = 'Error de conexión con el servidor. Verifica tu conexión.';
+                } catch (err) {
+                    authErrorMsg.textContent = 'Error de conexión con el servidor.';
                     authErrorMsg.style.display = 'block';
                 } finally {
                     btnAuthSubmit.disabled = false;
-                    btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar a Jugar' : 'Registrar y Jugar';
                 }
             });
 
-            // Manejador del juego
             const game = new SpaceInvaders('gameCanvas', {
                 onRequestStart: () => {
-                    // Si no está autenticado, abrir modal
-                    if (!authToken) {
-                        openAuthModal('login');
-                    } else {
-                        game.start();
-                    }
+                    if (!authToken) openAuthModal('login');
+                    else game.start();
                 },
                 onScoreUpdate: (score, lives, level) => {
-                    currentScore = score;
                     hudScore.textContent = score.toLocaleString();
                     hudLevel.textContent = level;
-
-                    let hearts = '';
-                    for (let i = 0; i < lives; i++) hearts += '🚀 ';
-                    hudLives.textContent = hearts || '0';
+                    renderLives(lives);
 
                     if (score > record) {
                         record = score;
@@ -1641,21 +1608,18 @@ require_once __DIR__ . '/config/db.php';
                     }
                 },
                 onGameOver: async (score) => {
-                    currentScore = score;
                     await handleGameOver(score);
                 }
             });
 
-            // SUBIDA AUTOMÁTICA AUTENTICADA POR TOKEN JSON
             async function handleGameOver(score) {
-                modalHeading.innerHTML = '<span>👾</span> ¡Partida Terminada!';
+                modalHeading.textContent = 'Partida finalizada';
                 scoreBannerBox.style.display = 'flex';
                 finalScoreVal.textContent = score.toLocaleString();
                 autoSavedNotice.style.display = 'none';
 
                 scoreModal.classList.add('active');
 
-                // Si está autenticado y sacó más de 0 puntos, subir con Token JSON
                 if (authToken && score > 0) {
                     try {
                         const res = await fetch('api.php?action=submit_score', {
@@ -1664,26 +1628,21 @@ require_once __DIR__ . '/config/db.php';
                                 'Authorization': `Bearer ${authToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ score: score })
+                            body: JSON.stringify({ score })
                         });
                         const json = await res.json();
                         if (json.success) {
-                            autoSavedNotice.innerHTML = `✅ ¡Puntuación de <strong>${Number(score).toLocaleString()}</strong> guardada para <strong>${escapeHtml(json.data.username)}</strong>! (Posición #${json.data.rank})`;
+                            autoSavedNotice.textContent = `Puntuación registrada · Puesto #${json.data.rank}`;
                             autoSavedNotice.style.display = 'block';
                         }
-                    } catch(err) {
-                        console.error('Error al subir puntuación con Token:', err);
-                    }
-                } else if (!authToken) {
-                    autoSavedNotice.innerHTML = `💡 Inicia sesión para que tus récords se guarden automáticamente en tu cuenta.`;
-                    autoSavedNotice.style.display = 'block';
+                    } catch (err) {}
                 }
 
                 await fetchLeaderboard();
             }
 
             async function openLeaderboardModal() {
-                modalHeading.innerHTML = '<span>🏆</span> Mejores Puntuaciones';
+                modalHeading.textContent = 'Ranking';
                 scoreBannerBox.style.display = 'none';
                 autoSavedNotice.style.display = 'none';
                 scoreModal.classList.add('active');
@@ -1695,7 +1654,7 @@ require_once __DIR__ . '/config/db.php';
             }
 
             async function fetchLeaderboard() {
-                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--text-secondary);">Cargando puntuaciones...</td></tr>`;
+                scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Cargando...</td></tr>`;
 
                 try {
                     const res = await fetch('api.php?action=leaderboard');
@@ -1704,36 +1663,32 @@ require_once __DIR__ . '/config/db.php';
                     if (json.success && json.data && json.data.scores) {
                         renderTable(json.data.scores);
                     } else {
-                        scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">No hay registros aún</td></tr>`;
+                        scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Sin registros</td></tr>`;
                     }
-                } catch(e) {
-                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px; color: var(--accent-coral);">No se pudo conectar a la base de datos</td></tr>`;
+                } catch (e) {
+                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Sin conexión</td></tr>`;
                 }
             }
 
             function renderTable(scores) {
                 if (!scores.length) {
-                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 14px;">Sé el primero en registrar récord</td></tr>`;
+                    scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Sin registros</td></tr>`;
                     return;
                 }
 
                 let html = '';
                 scores.forEach((s) => {
-                    let pos = `#${s.rank}`;
-                    let rowClass = '';
-                    if (s.rank === 1) { pos = '🥇 1'; rowClass = 'top-1'; }
-                    else if (s.rank === 2) { pos = '🥈 2'; rowClass = 'top-2'; }
-                    else if (s.rank === 3) { pos = '🥉 3'; rowClass = 'top-3'; }
-
                     const isCurrent = authUsername && s.username.toLowerCase() === authUsername.toLowerCase();
-                    const highlightStyle = isCurrent ? 'style="background: rgba(56, 189, 248, 0.1);"' : '';
+                    const classes = [];
+                    if (s.rank <= 3) classes.push(`rank-${s.rank}`);
+                    if (isCurrent) classes.push('is-me');
 
                     html += `
-                        <tr class="${rowClass}" ${highlightStyle}>
-                            <td class="col-pos">${pos}</td>
-                            <td class="col-name">${escapeHtml(s.username)} ${isCurrent ? '⭐' : ''}</td>
-                            <td class="col-pts">${Number(s.score).toLocaleString()}</td>
-                            <td class="col-time">${escapeHtml(s.date || '')}</td>
+                        <tr class="${classes.join(' ')}">
+                            <td class="col-rank">${s.rank}</td>
+                            <td class="col-player">${escapeHtml(s.username)}</td>
+                            <td class="col-score">${Number(s.score).toLocaleString()}</td>
+                            <td class="col-date">${escapeHtml(s.date || '')}</td>
                         </tr>
                     `;
                 });
@@ -1746,30 +1701,8 @@ require_once __DIR__ . '/config/db.php';
                 return el.innerHTML;
             }
 
-            // =================================================================
-            // GESTIÓN DEL MODAL DE AJUSTES Y CAMBIO DE CONTRASEÑA
-            // =================================================================
-            function setupPwdToggle(btn, input) {
-                if (!btn || !input) return;
-                btn.addEventListener('click', () => {
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        btn.textContent = '🔒';
-                    } else {
-                        input.type = 'password';
-                        btn.textContent = '👁️';
-                    }
-                });
-            }
-
-            setupPwdToggle(btnToggleCurrentPwd, currentPasswordInput);
-            setupPwdToggle(btnToggleNewPwd, newPasswordInput);
-            setupPwdToggle(btnToggleConfirmPwd, confirmPasswordInput);
-
             function openSettingsModal() {
-                if (game.state === 'PLAYING') {
-                    game.togglePause();
-                }
+                if (game.state === 'PLAYING') game.togglePause();
 
                 settingsErrorMsg.style.display = 'none';
                 settingsSuccessMsg.style.display = 'none';
@@ -1778,11 +1711,12 @@ require_once __DIR__ . '/config/db.php';
                 confirmPasswordInput.value = '';
 
                 if (authToken && authUsername) {
+                    settingsAccountBar.style.display = 'flex';
                     settingsUsernameLabel.textContent = authUsername;
                     settingsUsernameGroup.style.display = 'none';
                     settingsUsernameInput.required = false;
                 } else {
-                    settingsUsernameLabel.textContent = 'No has iniciado sesión';
+                    settingsAccountBar.style.display = 'none';
                     settingsUsernameGroup.style.display = 'flex';
                     settingsUsernameInput.value = authUsername || '';
                     settingsUsernameInput.required = true;
@@ -1790,12 +1724,9 @@ require_once __DIR__ . '/config/db.php';
 
                 settingsModal.classList.add('active');
                 setTimeout(() => {
-                    if (authToken && authUsername) {
-                        currentPasswordInput.focus();
-                    } else {
-                        settingsUsernameInput.focus();
-                    }
-                }, 150);
+                    if (authToken && authUsername) currentPasswordInput.focus();
+                    else settingsUsernameInput.focus();
+                }, 80);
             }
 
             function closeSettingsModal() {
@@ -1812,44 +1743,37 @@ require_once __DIR__ . '/config/db.php';
                 const newPassword     = newPasswordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
 
-                if (!currentPassword || !newPassword || !confirmPassword) {
-                    settingsErrorMsg.textContent = 'Por favor completa todos los campos.';
-                    settingsErrorMsg.style.display = 'block';
-                    return;
-                }
+                if (!currentPassword || !newPassword || !confirmPassword) return;
 
                 if (newPassword.length < 3) {
-                    settingsErrorMsg.textContent = 'La nueva contraseña debe tener al menos 3 caracteres.';
+                    settingsErrorMsg.textContent = 'Mínimo 3 caracteres.';
                     settingsErrorMsg.style.display = 'block';
                     return;
                 }
 
                 if (newPassword !== confirmPassword) {
-                    settingsErrorMsg.textContent = 'La nueva contraseña y su confirmación no coinciden.';
+                    settingsErrorMsg.textContent = 'Las contraseñas no coinciden.';
                     settingsErrorMsg.style.display = 'block';
                     return;
                 }
 
                 if (currentPassword === newPassword) {
-                    settingsErrorMsg.textContent = 'La nueva contraseña debe ser diferente a la actual.';
+                    settingsErrorMsg.textContent = 'La nueva contraseña debe ser distinta a la actual.';
                     settingsErrorMsg.style.display = 'block';
                     return;
                 }
 
                 btnChangePwdSubmit.disabled = true;
-                btnChangePwdSubmit.textContent = 'Actualizando...';
 
                 try {
                     const headers = { 'Content-Type': 'application/json' };
-                    if (authToken) {
-                        headers['Authorization'] = `Bearer ${authToken}`;
-                    }
+                    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
                     const res = await fetch('api.php?action=change_password', {
                         method: 'POST',
-                        headers: headers,
+                        headers,
                         body: JSON.stringify({
-                            username: username,
+                            username,
                             current_password: currentPassword,
                             new_password: newPassword,
                             confirm_password: confirmPassword
@@ -1865,6 +1789,7 @@ require_once __DIR__ . '/config/db.php';
                             localStorage.setItem('si_auth_token', authToken);
                             localStorage.setItem('si_auth_user', authUsername);
                             syncAuthUI();
+                            settingsAccountBar.style.display = 'flex';
                             settingsUsernameLabel.textContent = authUsername;
                             settingsUsernameGroup.style.display = 'none';
                         }
@@ -1873,33 +1798,41 @@ require_once __DIR__ . '/config/db.php';
                         newPasswordInput.value = '';
                         confirmPasswordInput.value = '';
 
-                        settingsSuccessMsg.textContent = `✅ ${json.message || '¡Contraseña actualizada correctamente!'}`;
+                        settingsSuccessMsg.textContent = 'Contraseña actualizada.';
                         settingsSuccessMsg.style.display = 'block';
                     } else {
-                        settingsErrorMsg.textContent = json.message || 'No se pudo cambiar la contraseña.';
+                        settingsErrorMsg.textContent = json.message || 'No se pudo actualizar.';
                         settingsErrorMsg.style.display = 'block';
                     }
                 } catch (err) {
-                    settingsErrorMsg.textContent = 'Error de conexión con el servidor. Inténtalo de nuevo.';
+                    settingsErrorMsg.textContent = 'Error de conexión.';
                     settingsErrorMsg.style.display = 'block';
                 } finally {
                     btnChangePwdSubmit.disabled = false;
-                    btnChangePwdSubmit.textContent = 'Actualizar Contraseña';
                 }
             });
 
-            // Eventos de botones
-            btnSettings.addEventListener('click', () => {
-                openSettingsModal();
+            // Cerrar modales con Escape o clic fuera del diálogo
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAuthModal();
+                    closeScoreModal();
+                    closeSettingsModal();
+                }
             });
 
-            btnCloseSettings.addEventListener('click', () => {
-                closeSettingsModal();
+            [authModal, scoreModal, settingsModal].forEach((modal) => {
+                modal.addEventListener('mousedown', (e) => {
+                    if (e.target === modal) modal.classList.remove('active');
+                });
             });
+
+            btnSettings.addEventListener('click', openSettingsModal);
+            btnCloseSettings.addEventListener('click', closeSettingsModal);
+
             btnPlayGame.addEventListener('click', () => {
-                if (!authToken) {
-                    openAuthModal('login');
-                } else {
+                if (!authToken) openAuthModal('login');
+                else {
                     closeScoreModal();
                     game.start();
                 }
@@ -1910,35 +1843,22 @@ require_once __DIR__ . '/config/db.php';
                 game.start();
             });
 
-            btnShowScores.addEventListener('click', () => {
-                openLeaderboardModal();
-            });
-
-            btnCloseModal.addEventListener('click', () => {
-                closeScoreModal();
-            });
-
-            btnLoginOpen.addEventListener('click', () => {
-                openAuthModal('login');
-            });
+            btnShowScores.addEventListener('click', openLeaderboardModal);
+            btnCloseModal.addEventListener('click', closeScoreModal);
+            btnLoginOpen.addEventListener('click', () => openAuthModal('login'));
 
             btnLogout.addEventListener('click', () => {
                 clearAuth();
+                closeSettingsModal();
             });
 
-            btnCloseAuth.addEventListener('click', () => {
-                closeAuthModal();
-            });
+            btnCloseAuth.addEventListener('click', closeAuthModal);
 
             btnToggleSound.addEventListener('click', () => {
                 const active = game.sound.toggle();
-                soundIcon.textContent = active ? '🔊' : '🔇';
+                soundIconOn.style.display = active ? 'block' : 'none';
+                soundIconOff.style.display = active ? 'none' : 'block';
             });
-
-            // Si no hay token guardado, invitar a iniciar sesión de forma amigable
-            if (!authToken) {
-                setTimeout(() => openAuthModal('login'), 350);
-            }
         });
     </script>
 </body>
