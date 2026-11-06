@@ -215,6 +215,89 @@ if ($action === 'verify_token') {
 }
 
 // -----------------------------------------------------------------------------
+// 3.5 CAMBIAR CONTRASEÑA (DESDE AJUSTES)
+// -----------------------------------------------------------------------------
+if ($action === 'change_password') {
+    if ($method !== 'POST') jsonOut(false, 'Método HTTP inválido', null, 405);
+
+    $token           = extractToken($payload);
+    $usernameInput   = cleanUsername($payload['username'] ?? '');
+    $currentPassword = trim($payload['current_password'] ?? '');
+    $newPassword     = trim($payload['new_password'] ?? '');
+    $confirmPassword = isset($payload['confirm_password']) ? trim($payload['confirm_password']) : $newPassword;
+
+    if (empty($currentPassword) || empty($newPassword)) {
+        jsonOut(false, 'Por favor completa la contraseña actual y la nueva contraseña.', null, 400);
+    }
+
+    if (mb_strlen($newPassword) < 3) {
+        jsonOut(false, 'La nueva contraseña debe tener al menos 3 caracteres.', null, 400);
+    }
+
+    if ($newPassword !== $confirmPassword) {
+        jsonOut(false, 'La nueva contraseña y su confirmación no coinciden.', null, 400);
+    }
+
+    if ($currentPassword === $newPassword) {
+        jsonOut(false, 'La nueva contraseña debe ser diferente a la actual.', null, 400);
+    }
+
+    if ($pdo === null) jsonOut(false, 'Base de datos no disponible.', null, 503);
+
+    try {
+        $user = null;
+
+        // Buscar primero por Token activo
+        if ($token) {
+            $stmt = $pdo->prepare("
+                SELECT id, username, password_hash FROM users 
+                WHERE auth_token = :t AND (token_expires_at IS NULL OR token_expires_at > NOW())
+            ");
+            $stmt->execute([':t' => $token]);
+            $user = $stmt->fetch();
+        }
+
+        // Si no se encontró por token, buscar por nombre de usuario
+        if (!$user && !empty($usernameInput)) {
+            $stmt = $pdo->prepare("SELECT id, username, password_hash FROM users WHERE LOWER(username) = LOWER(:u)");
+            $stmt->execute([':u' => $usernameInput]);
+            $user = $stmt->fetch();
+        }
+
+        if (!$user) {
+            jsonOut(false, 'Debes iniciar sesión con una cuenta válida para cambiar la contraseña.', null, 401);
+        }
+
+        // Verificar que la contraseña actual sea correcta
+        if (!password_verify($currentPassword, $user['password_hash'])) {
+            jsonOut(false, 'La contraseña actual es incorrecta.', null, 401);
+        }
+
+        // Generar nuevo hash BCRYPT y renovar el token de sesión
+        $newHash  = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 10]);
+        $newToken = bin2hex(random_bytes(32));
+
+        $updateStmt = $pdo->prepare("
+            UPDATE users 
+            SET password_hash = :p, auth_token = :t, token_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
+            WHERE id = :id
+        ");
+        $updateStmt->execute([
+            ':p'  => $newHash,
+            ':t'  => $newToken,
+            ':id' => $user['id']
+        ]);
+
+        jsonOut(true, '¡Contraseña actualizada correctamente!', [
+            'username' => $user['username'],
+            'token'    => $newToken
+        ]);
+    } catch (PDOException $e) {
+        jsonOut(false, 'Error al actualizar la contraseña: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// -----------------------------------------------------------------------------
 // 4. GUARDAR PUNTUACIÓN (Asociada al Usuario verificado por Token)
 // -----------------------------------------------------------------------------
 if ($action === 'submit_score') {

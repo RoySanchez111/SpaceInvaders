@@ -594,6 +594,9 @@ require_once __DIR__ . '/config/db.php';
                 <button type="button" class="btn-header" id="btnShowScores">
                     🏆 Puntuaciones
                 </button>
+                <button type="button" class="btn-header" id="btnSettings" title="Ajustes de cuenta">
+                    ⚙️ Ajustes
+                </button>
             </div>
         </header>
 
@@ -735,6 +738,69 @@ require_once __DIR__ . '/config/db.php';
                 </button>
             </div>
 
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 3: AJUSTES (CAMBIAR CONTRASEÑA Y CUENTA)
+         ========================================================================= -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⚙️</span> Ajustes
+                </div>
+                <button type="button" class="btn-close" id="btnCloseSettings">✕</button>
+            </div>
+
+            <!-- Información de cuenta activa -->
+            <div class="user-pill" id="settingsUserBox" style="justify-content: space-between; width: 100%; padding: 10px 14px;">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <span>👤</span>
+                    <span>Cuenta: <strong id="settingsUsernameLabel">Invitado</strong></span>
+                </span>
+                <span style="font-size: 0.78rem; color: var(--text-secondary);">Seguridad</span>
+            </div>
+
+            <div class="table-section-title" style="margin-top: 2px;">🔒 Cambiar Contraseña</div>
+
+            <div class="auth-error" id="settingsErrorMsg"></div>
+            <div class="toast-msg" id="settingsSuccessMsg" style="display: none;"></div>
+
+            <form class="auth-form" id="changePwdForm">
+                <div class="form-group" id="settingsUsernameGroup" style="display: none;">
+                    <label class="form-label" for="settingsUsernameInput">Nombre de Usuario</label>
+                    <input type="text" class="auth-input" id="settingsUsernameInput" placeholder="Tu usuario registrado" maxlength="25" autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="currentPasswordInput">Contraseña Actual</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="auth-input" id="currentPasswordInput" placeholder="Ingresa tu contraseña actual" minlength="3" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pwd" id="btnToggleCurrentPwd" title="Mostrar/Ocultar">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="newPasswordInput">Nueva Contraseña</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="auth-input" id="newPasswordInput" placeholder="Mínimo 3 caracteres" minlength="3" required autocomplete="new-password">
+                        <button type="button" class="btn-toggle-pwd" id="btnToggleNewPwd" title="Mostrar/Ocultar">👁️</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPasswordInput">Confirmar Nueva Contraseña</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="auth-input" id="confirmPasswordInput" placeholder="Repite la nueva contraseña" minlength="3" required autocomplete="new-password">
+                        <button type="button" class="btn-toggle-pwd" id="btnToggleConfirmPwd" title="Mostrar/Ocultar">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btnChangePwdSubmit" style="width: 100%; margin-top: 4px;">
+                    Actualizar Contraseña
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1363,6 +1429,24 @@ require_once __DIR__ . '/config/db.php';
             const btnPlayAgain       = document.getElementById('btnPlayAgain');
             const btnCloseModal      = document.getElementById('btnCloseModal');
 
+            // Modal Ajustes (Cambiar Contraseña)
+            const btnSettings           = document.getElementById('btnSettings');
+            const settingsModal         = document.getElementById('settingsModal');
+            const btnCloseSettings      = document.getElementById('btnCloseSettings');
+            const settingsUsernameLabel = document.getElementById('settingsUsernameLabel');
+            const settingsUsernameGroup = document.getElementById('settingsUsernameGroup');
+            const settingsUsernameInput = document.getElementById('settingsUsernameInput');
+            const changePwdForm         = document.getElementById('changePwdForm');
+            const currentPasswordInput  = document.getElementById('currentPasswordInput');
+            const newPasswordInput      = document.getElementById('newPasswordInput');
+            const confirmPasswordInput  = document.getElementById('confirmPasswordInput');
+            const btnToggleCurrentPwd   = document.getElementById('btnToggleCurrentPwd');
+            const btnToggleNewPwd       = document.getElementById('btnToggleNewPwd');
+            const btnToggleConfirmPwd   = document.getElementById('btnToggleConfirmPwd');
+            const btnChangePwdSubmit    = document.getElementById('btnChangePwdSubmit');
+            const settingsErrorMsg      = document.getElementById('settingsErrorMsg');
+            const settingsSuccessMsg    = document.getElementById('settingsSuccessMsg');
+
             let authMode = 'login'; // 'login' o 'register'
             let authToken = localStorage.getItem('si_auth_token') || '';
             let authUsername = localStorage.getItem('si_auth_user') || '';
@@ -1662,7 +1746,156 @@ require_once __DIR__ . '/config/db.php';
                 return el.innerHTML;
             }
 
+            // =================================================================
+            // GESTIÓN DEL MODAL DE AJUSTES Y CAMBIO DE CONTRASEÑA
+            // =================================================================
+            function setupPwdToggle(btn, input) {
+                if (!btn || !input) return;
+                btn.addEventListener('click', () => {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        btn.textContent = '🔒';
+                    } else {
+                        input.type = 'password';
+                        btn.textContent = '👁️';
+                    }
+                });
+            }
+
+            setupPwdToggle(btnToggleCurrentPwd, currentPasswordInput);
+            setupPwdToggle(btnToggleNewPwd, newPasswordInput);
+            setupPwdToggle(btnToggleConfirmPwd, confirmPasswordInput);
+
+            function openSettingsModal() {
+                if (game.state === 'PLAYING') {
+                    game.togglePause();
+                }
+
+                settingsErrorMsg.style.display = 'none';
+                settingsSuccessMsg.style.display = 'none';
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+
+                if (authToken && authUsername) {
+                    settingsUsernameLabel.textContent = authUsername;
+                    settingsUsernameGroup.style.display = 'none';
+                    settingsUsernameInput.required = false;
+                } else {
+                    settingsUsernameLabel.textContent = 'No has iniciado sesión';
+                    settingsUsernameGroup.style.display = 'flex';
+                    settingsUsernameInput.value = authUsername || '';
+                    settingsUsernameInput.required = true;
+                }
+
+                settingsModal.classList.add('active');
+                setTimeout(() => {
+                    if (authToken && authUsername) {
+                        currentPasswordInput.focus();
+                    } else {
+                        settingsUsernameInput.focus();
+                    }
+                }, 150);
+            }
+
+            function closeSettingsModal() {
+                settingsModal.classList.remove('active');
+            }
+
+            changePwdForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                settingsErrorMsg.style.display = 'none';
+                settingsSuccessMsg.style.display = 'none';
+
+                const username        = (authToken && authUsername) ? authUsername : settingsUsernameInput.value.trim();
+                const currentPassword = currentPasswordInput.value;
+                const newPassword     = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    settingsErrorMsg.textContent = 'Por favor completa todos los campos.';
+                    settingsErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                if (newPassword.length < 3) {
+                    settingsErrorMsg.textContent = 'La nueva contraseña debe tener al menos 3 caracteres.';
+                    settingsErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    settingsErrorMsg.textContent = 'La nueva contraseña y su confirmación no coinciden.';
+                    settingsErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                if (currentPassword === newPassword) {
+                    settingsErrorMsg.textContent = 'La nueva contraseña debe ser diferente a la actual.';
+                    settingsErrorMsg.style.display = 'block';
+                    return;
+                }
+
+                btnChangePwdSubmit.disabled = true;
+                btnChangePwdSubmit.textContent = 'Actualizando...';
+
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (authToken) {
+                        headers['Authorization'] = `Bearer ${authToken}`;
+                    }
+
+                    const res = await fetch('api.php?action=change_password', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({
+                            username: username,
+                            current_password: currentPassword,
+                            new_password: newPassword,
+                            confirm_password: confirmPassword
+                        })
+                    });
+
+                    const json = await res.json();
+
+                    if (json.success) {
+                        if (json.data && json.data.token) {
+                            authToken = json.data.token;
+                            authUsername = json.data.username || username;
+                            localStorage.setItem('si_auth_token', authToken);
+                            localStorage.setItem('si_auth_user', authUsername);
+                            syncAuthUI();
+                            settingsUsernameLabel.textContent = authUsername;
+                            settingsUsernameGroup.style.display = 'none';
+                        }
+
+                        currentPasswordInput.value = '';
+                        newPasswordInput.value = '';
+                        confirmPasswordInput.value = '';
+
+                        settingsSuccessMsg.textContent = `✅ ${json.message || '¡Contraseña actualizada correctamente!'}`;
+                        settingsSuccessMsg.style.display = 'block';
+                    } else {
+                        settingsErrorMsg.textContent = json.message || 'No se pudo cambiar la contraseña.';
+                        settingsErrorMsg.style.display = 'block';
+                    }
+                } catch (err) {
+                    settingsErrorMsg.textContent = 'Error de conexión con el servidor. Inténtalo de nuevo.';
+                    settingsErrorMsg.style.display = 'block';
+                } finally {
+                    btnChangePwdSubmit.disabled = false;
+                    btnChangePwdSubmit.textContent = 'Actualizar Contraseña';
+                }
+            });
+
             // Eventos de botones
+            btnSettings.addEventListener('click', () => {
+                openSettingsModal();
+            });
+
+            btnCloseSettings.addEventListener('click', () => {
+                closeSettingsModal();
+            });
             btnPlayGame.addEventListener('click', () => {
                 if (!authToken) {
                     openAuthModal('login');
