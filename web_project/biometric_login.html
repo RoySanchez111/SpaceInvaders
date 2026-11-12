@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Biométrico de Comandante</title>
+    <style>
+        :root {
+            --bg-dark: #121316;
+            --card-glass: rgba(28, 30, 36, 0.85);
+            --crimson: #e63946;
+            --amber: #f4a261;
+            --text-light: #f1faee;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top, #1f2229, var(--bg-dark));
+            color: var(--text-light);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .scanner-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(230, 57, 70, 0.35);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+        h2 {
+            margin: 0 0 6px 0;
+            color: var(--crimson);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.35rem;
+        }
+        p.sub {
+            margin: 0 0 20px 0;
+            font-size: 0.85rem;
+            color: #a8b2c1;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            color: var(--amber);
+            font-weight: 600;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #3a3f4b;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        .viewport-box {
+            position: relative;
+            width: 100%;
+            height: 230px;
+            background: #090a0c;
+            border: 1px dashed var(--crimson);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        video, img#preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        button, .file-label {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .btn-cam {
+            background: #2b303c;
+            color: #fff;
+            border: 1px solid #454d5e;
+        }
+        .btn-primary {
+            background: var(--crimson);
+            color: #fff;
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--amber);
+            border: 1px solid var(--amber);
+        }
+        button:hover, .file-label:hover {
+            opacity: 0.9;
+        }
+        #statusBox {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: none;
+            word-break: break-all;
+        }
+        .ok { background: rgba(42, 157, 143, 0.2); border: 1px solid #2a9d8f; color: #7ef2e4; }
+        .err { background: rgba(230, 57, 70, 0.2); border: 1px solid var(--crimson); color: #ffb3b8; }
+    </style>
+</head>
+<body>
+
+<div class="scanner-card">
+    <h2>Identificación Biométrica</h2>
+    <p class="sub">API Nativa PHP + Motor Facial OpenCV (2FA)</p>
+
+    <div class="form-group">
+        <label>Usuario Comandante</label>
+        <input type="text" id="username" placeholder="Ej. Commander_Roy" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+        <label>Clave de Acceso</label>
+        <input type="password" id="password" placeholder="Mínimo 6 caracteres">
+    </div>
+
+    <div class="viewport-box">
+        <video id="video" autoplay playsinline style="display:none;"></video>
+        <img id="preview" alt="Vista previa biométrica" style="display:none;">
+        <span id="placeholderText" style="color:#6c757d; font-size:0.85rem;">Sin captura facial activa</span>
+        <canvas id="canvas" width="400" height="400" style="display:none;"></canvas>
+    </div>
+
+    <div class="btn-row">
+        <button type="button" class="btn-cam" id="btnStartCam">Activar Cámara</button>
+        <button type="button" class="btn-cam" id="btnSnap" style="display:none;">Capturar Frame</button>
+        <label class="file-label btn-cam">
+            Subir / Tomar Foto
+            <input type="file" id="fileInput" accept="image/*" capture="user" style="display:none;">
+        </label>
+    </div>
+
+    <div class="btn-row">
+        <button type="button" class="btn-primary" onclick="sendAuth('login')">Iniciar Sesión (2FA)</button>
+        <button type="button" class="btn-secondary" onclick="sendAuth('register')">Registrar Rostro</button>
+    </div>
+
+    <div id="statusBox"></div>
+</div>
+
+<script>
+let base64Face = "";
+const video = document.getElementById('video');
+const preview = document.getElementById('preview');
+const canvas = document.getElementById('canvas');
+const placeholder = document.getElementById('placeholderText');
+const btnSnap = document.getElementById('btnSnap');
+
+// 1. Intentar usar la cámara en vivo (si está en localhost o HTTPS)
+document.getElementById('btnStartCam').addEventListener('click', async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        preview.style.display = 'none';
+        placeholder.style.display = 'none';
+        btnSnap.style.display = 'block';
+    } catch (err) {
+        showStatus('Nota: En HTTP sin SSL el navegador bloquea la cámara en vivo. Usa el botón "Subir / Tomar Foto".', false);
+    }
+});
+
+// 2. Capturar frame del video
+btnSnap.addEventListener('click', () => {
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth || 400;
+    canvas.height = video.videoHeight || 400;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    base64Face = canvas.toDataURL('image/jpeg', 0.85);
+    preview.src = base64Face;
+    video.style.display = 'none';
+    preview.style.display = 'block';
+});
+
+// 3. Alternativa universal: Subir o capturar archivo de imagen (funciona siempre en HTTP y HTTPS)
+document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        base64Face = ev.target.result;
+        preview.src = base64Face;
+        video.style.display = 'none';
+        placeholder.style.display = 'none';
+        preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+// 4. Consumir la API en PHP Nativo (/api/v1/auth.php)
+async function sendAuth(action) {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password || !base64Face) {
+        showStatus('Completa usuario, contraseña y captura/sube una fotografía frontal.', false);
+        return;
+    }
+
+    showStatus('Procesando biometría en el servidor con OpenCV...', true);
+
+    try {
+        const response = await fetch('api/v1/auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: action,
+                username: username,
+                password: password,
+                face_image: base64Face
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === 'success') {
+            if (result.token) {
+                localStorage.setItem('commander_jwt', result.token);
+                localStorage.setItem('commander_username', username);
+                showStatus(`✅ ${result.message}<br><strong>Confianza OpenCV:</strong> ${result.biometric_confidence}<br><strong>JWT emitido:</strong> ${result.token.substring(0, 38)}...`, true);
+            } else {
+                showStatus(`✅ ${result.message} Ahora puedes presionar "Iniciar Sesión (2FA)".`, true);
+            }
+        } else {
+            showStatus(`❌ ${result.message || 'Error en la autenticación'}`, false);
+        }
+    } catch (error) {
+        showStatus('❌ Error de red al conectar con api/v1/auth.php', false);
+    }
+}
+
+function showStatus(msg, isSuccess) {
+    const box = document.getElementById('statusBox');
+    box.style.display = 'block';
+    box.className = isSuccess ? 'ok' : 'err';
+    box.innerHTML = msg;
+}
+</script>
+
+</body>
+</html>
