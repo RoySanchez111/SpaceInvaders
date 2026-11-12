@@ -13,50 +13,56 @@ require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/validator.php';
 
 $isRequestEncoded = false;
-$pdo = getDatabaseConnection();
-ensureDatabaseSchema($pdo);
 
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$rawInput = file_get_contents('php://input');
-$payload = decodeRequestPayload($rawInput, $isRequestEncoded);
+try {
+    $pdo = getDatabaseConnection();
+    ensureDatabaseSchema($pdo);
 
-$action = $payload['action'] ?? $_GET['action'] ?? '';
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $rawInput = file_get_contents('php://input');
+    $payload = decodeRequestPayload($rawInput, $isRequestEncoded);
 
-switch ($action) {
-    case 'register':
-        if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
-        handleRegister($pdo, $payload);
-        break;
+    $action = $payload['action'] ?? $_GET['action'] ?? '';
 
-    case 'login':
-        if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
-        handleLogin($pdo, $payload);
-        break;
+    switch ($action) {
+        case 'register':
+            if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
+            handleRegister($pdo, $payload);
+            break;
 
-    case 'verify_token':
-        handleVerifyToken($pdo, $payload);
-        break;
+        case 'login':
+            if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
+            handleLogin($pdo, $payload);
+            break;
 
-    case 'logout':
-        handleLogout($pdo, $payload);
-        break;
+        case 'verify_token':
+            handleVerifyToken($pdo, $payload);
+            break;
 
-    case 'change_password':
-        if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
-        handleChangePassword($pdo, $payload);
-        break;
+        case 'logout':
+            handleLogout($pdo, $payload);
+            break;
 
-    case 'submit_score':
-        if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
-        handleSubmitScore($pdo, $payload);
-        break;
+        case 'change_password':
+            if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
+            handleChangePassword($pdo, $payload);
+            break;
 
-    case 'leaderboard':
-        handleLeaderboard($pdo, $payload);
-        break;
+        case 'submit_score':
+            if ($method !== 'POST') sendJson(false, 'Método no permitido.', null, 405);
+            handleSubmitScore($pdo, $payload);
+            break;
 
-    default:
-        sendJson(false, 'Acción no disponible.', null, 400);
+        case 'leaderboard':
+            handleLeaderboard($pdo, $payload);
+            break;
+
+        default:
+            sendJson(false, 'Acción no disponible.', null, 400);
+    }
+} catch (Throwable $e) {
+    error_log('[API Fatal] ' . $e->getMessage());
+    sendJson(false, 'Error interno del servidor: ' . $e->getMessage(), null, 500);
 }
 
 // =============================================================================

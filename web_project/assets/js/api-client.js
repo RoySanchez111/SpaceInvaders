@@ -87,7 +87,13 @@ window.ApiClient = {
         }
 
         const res = await fetch(`api/auth.php?action=${encodeURIComponent(action)}`, options);
-        const raw = await res.json();
+        const text = await res.text();
+        let raw;
+        try {
+            raw = JSON.parse(text);
+        } catch (e) {
+            throw new Error(`El servidor respondió con estado ${res.status} (no JSON).`);
+        }
         return this.decode(raw);
     }
 };

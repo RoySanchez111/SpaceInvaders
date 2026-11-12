@@ -387,7 +387,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 authErrorMsg.style.display = 'block';
             }
         } catch (err) {
-            authErrorMsg.textContent = 'No se pudo conectar con el servidor.';
+            authErrorMsg.textContent = err && err.message && err.message.includes('estado')
+                ? `No se pudo conectar con el servidor (${err.message}).`
+                : 'No se pudo conectar con el servidor.';
             authErrorMsg.style.display = 'block';
         } finally {
             btnAuthSubmit.disabled = false;
