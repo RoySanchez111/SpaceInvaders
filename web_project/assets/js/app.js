@@ -109,33 +109,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // 1. EVALUADOR DE CONTRASEÑA ROBUSTA (Crear Cuenta y Cambiar Contraseña)
     // =========================================================================
+    const COMMON_PASSWORDS = new Set([
+        'password', '12345678', '123456789', 'qwerty123', 'admin123',
+        'spaceinvaders', 'password123', 'letmein123', 'welcome123', 'iloveyou'
+    ]);
+
     function checkPwdCriteria(pwd, username = '') {
         const p = pwd || '';
-        const len    = p.length >= 8;
-        const mix    = /[A-Z]/.test(p) && /[a-z]/.test(p);
-        const num    = /[0-9]/.test(p);
-        const sym    = /[^A-Za-z0-9]/.test(p);
-        const noUser = !username || username.length < 3 || !p.toLowerCase().includes(username.toLowerCase());
-        const count  = (len ? 1 : 0) + (mix ? 1 : 0) + (num ? 1 : 0) + (sym ? 1 : 0);
+        const cleanUser = (username || '').trim();
+        const len      = p.length >= 8;
+        const mix      = /[A-Z]/.test(p) && /[a-z]/.test(p);
+        const num      = /[0-9]/.test(p);
+        const sym      = /[^A-Za-z0-9]/.test(p);
+        const noUser   = !cleanUser || cleanUser.length < 3 || !p.toLowerCase().includes(cleanUser.toLowerCase());
+        const notCommon = !COMMON_PASSWORDS.has(p.toLowerCase());
+        const noRepeat  = !/(.)\1{4,}/.test(p);
+        const count    = (len ? 1 : 0) + (mix ? 1 : 0) + (num ? 1 : 0) + (sym ? 1 : 0);
 
+        let note = '';
+        if (p.length > 0) {
+            if (!noUser)         note = 'La contraseña no debe contener tu nombre de usuario.';
+            else if (!notCommon) note = 'Esa contraseña es muy común; elige una más segura.';
+            else if (!noRepeat)  note = 'Evita repetir el mismo carácter 5 o más veces seguidas.';
+        }
+
+        const valid = len && mix && num && sym && noUser && notCommon && noRepeat;
         let level = 0;
         let label = 'Requerida';
         if (p.length > 0) {
-            if (!noUser || count <= 1) { level = 1; label = 'Débil'; }
-            else if (count === 2)      { level = 2; label = 'Regular'; }
-            else if (count === 3)      { level = 3; label = 'Aceptable'; }
-            else                       { level = 4; label = 'Robusta'; }
+            if (note || count <= 1) { level = 1; label = 'Débil'; }
+            else if (count === 2)   { level = 2; label = 'Regular'; }
+            else if (count === 3)   { level = 3; label = 'Aceptable'; }
+            else                    { level = 4; label = 'Robusta'; }
         }
 
-        return { len, mix, num, sym, noUser, level, label, valid: len && mix && num && sym && noUser };
+        return { len, mix, num, sym, noUser, notCommon, noRepeat, note, level, label, valid };
     }
 
     function bindPasswordMeter(inputEl, prefix, getUsernameFn) {
+        const elBox   = document.getElementById(`${prefix}RulesBox`);
         const elLen   = document.getElementById(`${prefix}RuleLen`);
         const elMix   = document.getElementById(`${prefix}RuleMix`);
         const elNum   = document.getElementById(`${prefix}RuleNum`);
         const elSym   = document.getElementById(`${prefix}RuleSym`);
         const elLabel = document.getElementById(`${prefix}StrengthLabel`);
+        const elNote  = document.getElementById(`${prefix}StrengthNote`);
         const bars    = [
             document.getElementById(`${prefix}Bar1`),
             document.getElementById(`${prefix}Bar2`),
@@ -149,10 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elMix) elMix.classList.toggle('done', c.mix);
             if (elNum) elNum.classList.toggle('done', c.num);
             if (elSym) elSym.classList.toggle('done', c.sym);
+            if (elBox) elBox.classList.toggle('is-strong', c.valid);
 
             if (elLabel) {
                 elLabel.textContent = c.label;
-                elLabel.className = c.level > 0 ? `lvl-${c.level}` : '';
+                elLabel.className = c.level > 0 ? `strength-badge lvl-${c.level}` : 'strength-badge';
+            }
+
+            if (elNote) {
+                elNote.textContent = c.note;
+                elNote.style.display = c.note ? 'block' : 'none';
             }
 
             bars.forEach((b, idx) => {
@@ -350,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (authMode === 'register') {
             const check = checkPwdCriteria(password, username);
             if (!check.valid) {
-                authErrorMsg.textContent = 'Cumple con los 4 requisitos de contraseña robusta para crear tu cuenta.';
+                authErrorMsg.textContent = check.note || 'Cumple con los 4 requisitos de contraseña robusta para crear tu cuenta.';
                 authErrorMsg.style.display = 'block';
                 authPasswordInput.focus();
                 return;
@@ -536,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const check = checkPwdCriteria(newPassword, window.ApiClient.getUsername());
         if (!check.valid) {
-            settingsErrorMsg.textContent = 'Cumple con los 4 requisitos de contraseña robusta para la nueva contraseña.';
+            settingsErrorMsg.textContent = check.note || 'Cumple con los 4 requisitos de contraseña robusta para la nueva contraseña.';
             settingsErrorMsg.style.display = 'block';
             newPasswordInput.focus();
             return;

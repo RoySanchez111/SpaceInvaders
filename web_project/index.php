@@ -38,7 +38,7 @@ require_once __DIR__ . '/config/db.php';
             <form class="form-stack" id="authForm">
                 <div class="field">
                     <label for="authUsernameInput">Nombre de jugador</label>
-                    <input type="text" class="input" id="authUsernameInput" maxlength="25" required autocomplete="username">
+                    <input type="text" class="input" id="authUsernameInput" maxlength="50" required autocomplete="username">
                 </div>
 
                 <div class="field">
@@ -54,8 +54,8 @@ require_once __DIR__ . '/config/db.php';
                 <!-- Medidor de Contraseña Robusta (Activo al Crear Cuenta) -->
                 <div class="pwd-strength-box" id="authRulesBox" style="display: none;">
                     <div class="strength-header">
-                        <span>Nivel de contraseña</span>
-                        <strong id="authStrengthLabel">Requerida</strong>
+                        <span>Seguridad de contraseña</span>
+                        <span class="strength-badge" id="authStrengthLabel">Requerida</span>
                     </div>
                     <div class="strength-bars">
                         <span class="s-bar" id="authBar1"></span>
@@ -66,9 +66,10 @@ require_once __DIR__ . '/config/db.php';
                     <div class="rules-grid">
                         <span class="rule-pill" id="authRuleLen">8+ caracteres</span>
                         <span class="rule-pill" id="authRuleMix">Mayús y minús</span>
-                        <span class="rule-pill" id="authRuleNum">Al menos 1 número</span>
-                        <span class="rule-pill" id="authRuleSym">Al menos 1 símbolo</span>
+                        <span class="rule-pill" id="authRuleNum">1 número</span>
+                        <span class="rule-pill" id="authRuleSym">1 símbolo (!@#$)</span>
                     </div>
+                    <div class="strength-note" id="authStrengthNote" style="display: none;"></div>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width: 100%; height: 40px;">
@@ -255,10 +256,10 @@ require_once __DIR__ . '/config/db.php';
                 </div>
 
                 <!-- Medidor de Contraseña Robusta (Al cambiar contraseña) -->
-                <div class="pwd-strength-box">
+                <div class="pwd-strength-box" id="setRulesBox">
                     <div class="strength-header">
-                        <span>Nivel de nueva contraseña</span>
-                        <strong id="setStrengthLabel">Requerida</strong>
+                        <span>Seguridad de nueva contraseña</span>
+                        <span class="strength-badge" id="setStrengthLabel">Requerida</span>
                     </div>
                     <div class="strength-bars">
                         <span class="s-bar" id="setBar1"></span>
@@ -269,9 +270,10 @@ require_once __DIR__ . '/config/db.php';
                     <div class="rules-grid">
                         <span class="rule-pill" id="setRuleLen">8+ caracteres</span>
                         <span class="rule-pill" id="setRuleMix">Mayús y minús</span>
-                        <span class="rule-pill" id="setRuleNum">Al menos 1 número</span>
-                        <span class="rule-pill" id="setRuleSym">Al menos 1 símbolo</span>
+                        <span class="rule-pill" id="setRuleNum">1 número</span>
+                        <span class="rule-pill" id="setRuleSym">1 símbolo (!@#$)</span>
                     </div>
+                    <div class="strength-note" id="setStrengthNote" style="display: none;"></div>
                 </div>
 
                 <!-- Verificación Biométrica para Cambio Sensible -->

@@ -196,8 +196,11 @@ function handleRegister(?PDO $pdo, array $payload): void {
     $password  = trim($payload['password'] ?? '');
     $faceImage = trim($payload['face_image'] ?? '');
 
-    if (mb_strlen($username) < 2 || mb_strlen($username) > 25) {
-        sendJson(false, 'El nombre de jugador debe tener entre 2 y 25 caracteres.', null, 400);
+    if ($username === '') {
+        sendJson(false, 'Ingresa un nombre de usuario.', null, 400);
+    }
+    if (mb_strlen($username) > 50) {
+        sendJson(false, 'El nombre de usuario no puede superar los 50 caracteres.', null, 400);
     }
 
     // 1. Validar Contraseña Robusta al crear cuenta

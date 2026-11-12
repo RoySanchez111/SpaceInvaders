@@ -4,8 +4,7 @@
  */
 
 function cleanUsername(string $raw): string {
-    $cleaned = preg_replace('/[^\w\s\-\.]/u', '', trim($raw));
-    return trim(preg_replace('/\s+/', ' ', $cleaned));
+    return trim($raw);
 }
 
 function extractBearerToken(array $payload): ?string {
