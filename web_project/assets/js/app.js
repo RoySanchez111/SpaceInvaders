@@ -1,177 +1,458 @@
 /**
- * Controlador principal de Space Invaders
- * Conecta el juego con la API de puntuaciones y el modal de fin de juego.
+ * Controlador de flujo de pantallas, sesión, clasificación y ajustes
  */
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Elementos del HUD
-    const hudScore     = document.getElementById('hudScore');
-    const hudHighScore = document.getElementById('hudHighScore');
-    const hudLives     = document.getElementById('hudLives');
-    const hudLevel     = document.getElementById('hudLevel');
+    // Pantallas principales (Flujo de acceso obligatorio)
+    const authScreen = document.getElementById('authScreen');
+    const gameScreen = document.getElementById('gameScreen');
 
-    // Botones
-    const btnNewGame     = document.getElementById('btnNewGame');
-    const btnViewScores  = document.getElementById('btnViewScores');
+    // Elementos de Autenticación
+    const tabLogin          = document.getElementById('tabLogin');
+    const tabRegister       = document.getElementById('tabRegister');
+    const authForm          = document.getElementById('authForm');
+    const authUsernameInput = document.getElementById('authUsernameInput');
+    const authPasswordInput = document.getElementById('authPasswordInput');
+    const btnTogglePwd      = document.getElementById('btnTogglePwd');
+    const authRulesBox      = document.getElementById('authRulesBox');
+    const authErrorMsg      = document.getElementById('authErrorMsg');
+    const btnAuthSubmit     = document.getElementById('btnAuthSubmit');
+    const authSwitchPrompt  = document.getElementById('authSwitchPrompt');
 
-    // Modal de Puntuaciones / Fin de Juego
+    // HUD y Controles del Juego
+    const displayUsername = document.getElementById('displayUsername');
+    const hudScore        = document.getElementById('hudScore');
+    const hudHiScore      = document.getElementById('hudHiScore');
+    const hudLevel        = document.getElementById('hudLevel');
+    const hudLives        = document.getElementById('hudLives');
+    const btnPlayGame     = document.getElementById('btnPlayGame');
+    const btnShowScores   = document.getElementById('btnShowScores');
+    const btnSettings     = document.getElementById('btnSettings');
+    const btnToggleSound  = document.getElementById('btnToggleSound');
+    const btnHeaderLogout = document.getElementById('btnHeaderLogout');
+    const soundIconOn     = document.getElementById('soundIconOn');
+    const soundIconOff    = document.getElementById('soundIconOff');
+
+    // Modal de Clasificación
     const scoreModal      = document.getElementById('scoreModal');
-    const modalTitle      = document.getElementById('modalTitle');
-    const finalScoreBox   = document.getElementById('finalScoreBox');
+    const modalHeading    = document.getElementById('modalHeading');
+    const scoreBannerBox  = document.getElementById('scoreBannerBox');
     const finalScoreVal   = document.getElementById('finalScoreVal');
-    const scoreForm       = document.getElementById('scoreForm');
-    const inputPlayer     = document.getElementById('inputPlayer');
-    const btnSaveScore    = document.getElementById('btnSaveScore');
+    const autoSavedNotice = document.getElementById('autoSavedNotice');
+    const scoresBody      = document.getElementById('scoresBody');
     const btnPlayAgain    = document.getElementById('btnPlayAgain');
     const btnCloseModal   = document.getElementById('btnCloseModal');
-    const leaderboardBody = document.getElementById('leaderboardBody');
-    const saveNotice      = document.getElementById('saveNotice');
 
-    // Telemetría en footer
-    const dbStatusDot = document.getElementById('dbStatusDot');
-    const dbStatusTxt = document.getElementById('dbStatusTxt');
+    // Modal de Ajustes (Cambio de contraseña)
+    const settingsModal         = document.getElementById('settingsModal');
+    const btnCloseSettings      = document.getElementById('btnCloseSettings');
+    const settingsUsernameLabel = document.getElementById('settingsUsernameLabel');
+    const btnLogout             = document.getElementById('btnLogout');
+    const changePwdForm         = document.getElementById('changePwdForm');
+    const currentPasswordInput  = document.getElementById('currentPasswordInput');
+    const newPasswordInput      = document.getElementById('newPasswordInput');
+    const confirmPasswordInput  = document.getElementById('confirmPasswordInput');
+    const btnToggleCurrentPwd   = document.getElementById('btnToggleCurrentPwd');
+    const btnToggleNewPwd       = document.getElementById('btnToggleNewPwd');
+    const btnToggleConfirmPwd   = document.getElementById('btnToggleConfirmPwd');
+    const btnChangePwdSubmit    = document.getElementById('btnChangePwdSubmit');
+    const settingsErrorMsg      = document.getElementById('settingsErrorMsg');
+    const settingsSuccessMsg    = document.getElementById('settingsSuccessMsg');
 
-    let currentScore = 0;
-    let localHighScore = parseInt(localStorage.getItem('space_invaders_hi') || '0', 10);
-    hudHighScore.textContent = localHighScore.toLocaleString();
+    let authMode = 'login';
+    let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
+    hudHiScore.textContent = record.toLocaleString();
 
-    // Iniciar el juego
     const game = new window.SpaceInvadersGame('gameCanvas', {
         onScoreUpdate: (score, lives, level) => {
-            currentScore = score;
             hudScore.textContent = score.toLocaleString();
-            hudLevel.textContent = String(level).padStart(2, '0');
+            hudLevel.textContent = level;
+            renderLives(lives);
 
-            // Representar vidas con naves o corazones
-            let hearts = '';
-            for (let i = 0; i < lives; i++) hearts += '🚀 ';
-            hudLives.textContent = hearts || '0';
-
-            if (score > localHighScore) {
-                localHighScore = score;
-                localStorage.setItem('space_invaders_hi', localHighScore);
-                hudHighScore.textContent = localHighScore.toLocaleString();
+            if (score > record) {
+                record = score;
+                localStorage.setItem('si_best_score', record);
+                hudHiScore.textContent = record.toLocaleString();
             }
         },
-        onGameOver: (finalScore, level) => {
-            currentScore = finalScore;
-            openScoreModal(true);
+        onGameOver: async (score) => {
+            await handleGameOver(score);
         }
     });
 
-    // Abrir Modal de Puntuaciones
-    async function openScoreModal(isGameOver = false) {
-        saveNotice.style.display = 'none';
+    function renderLives(lives) {
+        let html = '';
+        for (let i = 0; i < 3; i++) {
+            const lost = i >= lives ? 'lost' : '';
+            html += `<svg class="life-ship ${lost}" viewBox="0 0 16 12"><path d="M7 0h2v3h4v3h3v6H0V6h3V3h4V0z"/></svg>`;
+        }
+        hudLives.innerHTML = html;
+    }
+    renderLives(3);
 
-        if (isGameOver) {
-            modalTitle.textContent = '¡JUEGO TERMINADO!';
-            finalScoreBox.style.display = 'block';
-            finalScoreVal.textContent = currentScore.toLocaleString();
-            scoreForm.style.display = 'flex';
-            inputPlayer.value = '';
-            inputPlayer.focus();
-        } else {
-            modalTitle.textContent = 'MEJORES PUNTUACIONES';
-            finalScoreBox.style.display = 'none';
-            scoreForm.style.display = 'none';
+    function escapeHtml(text) {
+        const el = document.createElement('div');
+        el.textContent = text;
+        return el.innerHTML;
+    }
+
+    // Validación interactiva de reglas de contraseña
+    function checkPwdCriteria(pwd, username = '') {
+        const p = pwd || '';
+        const len  = p.length >= 8;
+        const mix  = /[A-Z]/.test(p) && /[a-z]/.test(p);
+        const num  = /[0-9]/.test(p);
+        const sym  = /[^A-Za-z0-9]/.test(p);
+        const noUser = !username || username.length < 3 || !p.toLowerCase().includes(username.toLowerCase());
+        return { len, mix, num, sym, valid: len && mix && num && sym && noUser };
+    }
+
+    function bindPasswordRules(inputEl, prefix, getUsernameFn) {
+        const elLen = document.getElementById(`${prefix}RuleLen`);
+        const elMix = document.getElementById(`${prefix}RuleMix`);
+        const elNum = document.getElementById(`${prefix}RuleNum`);
+        const elSym = document.getElementById(`${prefix}RuleSym`);
+
+        const update = () => {
+            const c = checkPwdCriteria(inputEl.value, getUsernameFn ? getUsernameFn() : '');
+            if (elLen) elLen.classList.toggle('done', c.len);
+            if (elMix) elMix.classList.toggle('done', c.mix);
+            if (elNum) elNum.classList.toggle('done', c.num);
+            if (elSym) elSym.classList.toggle('done', c.sym);
+            return c;
+        };
+
+        inputEl.addEventListener('input', update);
+        return update;
+    }
+
+    const updateAuthRules = bindPasswordRules(authPasswordInput, 'auth', () => authUsernameInput.value.trim());
+    const updateSettingsRules = bindPasswordRules(newPasswordInput, 'set', () => window.ApiClient.getUsername());
+    authUsernameInput.addEventListener('input', updateAuthRules);
+
+    // Transición entre Pantalla de Acceso y Pantalla de Juego
+    function enterGameScreen(username, bestScore = null) {
+        displayUsername.textContent = username;
+        settingsUsernameLabel.textContent = username;
+
+        if (bestScore !== null && bestScore > record) {
+            record = bestScore;
+            localStorage.setItem('si_best_score', record);
+            hudHiScore.textContent = record.toLocaleString();
         }
 
+        authScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        game.stop();
+    }
+
+    function returnToAuthScreen(defaultMode = 'login') {
+        game.stop();
+        scoreModal.classList.remove('active');
+        settingsModal.classList.remove('active');
+        gameScreen.style.display = 'none';
+        authScreen.style.display = 'flex';
+        setAuthMode(defaultMode);
+        authPasswordInput.value = '';
+        setTimeout(() => authUsernameInput.focus(), 60);
+    }
+
+    // Verificación inicial al cargar la aplicación
+    async function initSessionGate() {
+        const token = window.ApiClient.getToken();
+        if (!token) {
+            returnToAuthScreen('login');
+            return;
+        }
+
+        try {
+            const res = await window.ApiClient.request('verify_token', { token });
+            if (res && res.success && res.data && res.data.username) {
+                window.ApiClient.setSession(token, res.data.username);
+                enterGameScreen(res.data.username, res.data.best_score || 0);
+            } else {
+                window.ApiClient.clearSession();
+                returnToAuthScreen('login');
+            }
+        } catch (e) {
+            returnToAuthScreen('login');
+        }
+    }
+
+    // Cambiar entre Iniciar Sesión y Crear Cuenta
+    function setAuthMode(mode) {
+        authMode = mode;
+        authErrorMsg.style.display = 'none';
+
+        if (mode === 'login') {
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            authRulesBox.style.display = 'none';
+            btnAuthSubmit.textContent = 'Entrar al juego';
+            authSwitchPrompt.innerHTML = '¿Eres nuevo jugador? <button type="button" id="btnSwitchMode">Crear una cuenta</button>';
+        } else {
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            authRulesBox.style.display = 'grid';
+            updateAuthRules();
+            btnAuthSubmit.textContent = 'Registrarse y jugar';
+            authSwitchPrompt.innerHTML = '¿Ya tienes cuenta? <button type="button" id="btnSwitchMode">Iniciar sesión</button>';
+        }
+
+        const btnSwitch = document.getElementById('btnSwitchMode');
+        if (btnSwitch) {
+            btnSwitch.addEventListener('click', () => {
+                setAuthMode(authMode === 'login' ? 'register' : 'login');
+                authPasswordInput.focus();
+            });
+        }
+    }
+
+    tabLogin.addEventListener('click', () => setAuthMode('login'));
+    tabRegister.addEventListener('click', () => setAuthMode('register'));
+
+    function bindPasswordEye(btn, input) {
+        if (!btn || !input) return;
+        btn.addEventListener('click', () => {
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    }
+
+    bindPasswordEye(btnTogglePwd, authPasswordInput);
+    bindPasswordEye(btnToggleCurrentPwd, currentPasswordInput);
+    bindPasswordEye(btnToggleNewPwd, newPasswordInput);
+    bindPasswordEye(btnToggleConfirmPwd, confirmPasswordInput);
+
+    // Envío de Login / Registro
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        authErrorMsg.style.display = 'none';
+
+        const username = authUsernameInput.value.trim();
+        const password = authPasswordInput.value;
+        if (!username || !password) return;
+
+        if (authMode === 'register') {
+            const check = checkPwdCriteria(password, username);
+            if (!check.valid) {
+                authErrorMsg.textContent = 'Completa los 4 requisitos de contraseña para crear tu cuenta.';
+                authErrorMsg.style.display = 'block';
+                authPasswordInput.focus();
+                return;
+            }
+        }
+
+        btnAuthSubmit.disabled = true;
+        const action = authMode === 'register' ? 'register' : 'login';
+
+        try {
+            const res = await window.ApiClient.request(action, { username, password });
+
+            if (res && res.success && res.data && res.data.token) {
+                window.ApiClient.setSession(res.data.token, res.data.username);
+                enterGameScreen(res.data.username);
+            } else {
+                const msg = (res && res.message) ? res.message : 'No se pudo iniciar sesión.';
+                authErrorMsg.innerHTML = escapeHtml(msg);
+
+                if (res && res.data && res.data.not_found) {
+                    authErrorMsg.innerHTML += ` <button type="button" id="btnQuickRegister">Crear cuenta ahora</button>`;
+                    document.getElementById('btnQuickRegister').addEventListener('click', () => {
+                        setAuthMode('register');
+                        authPasswordInput.focus();
+                    });
+                } else if (res && res.data && res.data.user_exists) {
+                    authErrorMsg.innerHTML += ` <button type="button" id="btnQuickLogin">Iniciar sesión</button>`;
+                    document.getElementById('btnQuickLogin').addEventListener('click', () => {
+                        setAuthMode('login');
+                        authPasswordInput.focus();
+                    });
+                }
+
+                authErrorMsg.style.display = 'block';
+            }
+        } catch (err) {
+            authErrorMsg.textContent = 'No se pudo conectar con el servidor.';
+            authErrorMsg.style.display = 'block';
+        } finally {
+            btnAuthSubmit.disabled = false;
+        }
+    });
+
+    // Cerrar sesión
+    async function performLogout() {
+        try {
+            await window.ApiClient.request('logout', {});
+        } catch (e) {}
+        window.ApiClient.clearSession();
+        returnToAuthScreen('login');
+    }
+
+    btnLogout.addEventListener('click', performLogout);
+    btnHeaderLogout.addEventListener('click', performLogout);
+
+    // Fin de partida y Clasificación
+    async function handleGameOver(score) {
+        modalHeading.textContent = 'Fin de la partida';
+        scoreBannerBox.style.display = 'flex';
+        finalScoreVal.textContent = score.toLocaleString();
+        autoSavedNotice.style.display = 'none';
+
         scoreModal.classList.add('active');
-        await loadLeaderboard();
+
+        if (score > 0 && window.ApiClient.getToken()) {
+            try {
+                const res = await window.ApiClient.request('submit_score', { score });
+                if (res && res.success && res.data) {
+                    autoSavedNotice.textContent = `Nuevo registro guardado · Posición #${res.data.rank}`;
+                    autoSavedNotice.style.display = 'block';
+                }
+            } catch (e) {}
+        }
+
+        await fetchLeaderboard();
+    }
+
+    async function openLeaderboardModal() {
+        if (game.state === 'PLAYING') game.togglePause();
+        modalHeading.textContent = 'Clasificación general';
+        scoreBannerBox.style.display = 'none';
+        autoSavedNotice.style.display = 'none';
+        scoreModal.classList.add('active');
+        await fetchLeaderboard();
     }
 
     function closeScoreModal() {
         scoreModal.classList.remove('active');
     }
 
-    // Cargar Leaderboard desde MariaDB
-    async function loadLeaderboard() {
-        leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Cargando puntuaciones...</td></tr>`;
+    async function fetchLeaderboard() {
+        scoresBody.innerHTML = `<tr><td colspan="4" class="table-empty">Cargando clasificación...</td></tr>`;
 
         try {
-            const res = await fetch('api.php?action=leaderboard');
-            const json = await res.json();
-
-            if (json.success && json.data && json.data.scores) {
-                renderLeaderboard(json.data.scores);
-                if (json.data.db_connected !== undefined) {
-                    updateDbStatus(json.data.db_connected);
-                }
+            const res = await window.ApiClient.request('leaderboard', null, 'GET');
+            if (res && res.success && res.data && res.data.scores) {
+                renderTable(res.data.scores);
             } else {
-                leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Sin registros aún</td></tr>`;
+                scoresBody.innerHTML = `<tr><td colspan="4" class="table-empty">Aún no hay récords registrados</td></tr>`;
             }
         } catch (e) {
-            leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px; color:#e63946;">No se pudo conectar a la base de datos</td></tr>`;
+            scoresBody.innerHTML = `<tr><td colspan="4" class="table-empty">No se pudo cargar la tabla</td></tr>`;
         }
     }
 
-    function renderLeaderboard(scores) {
+    function renderTable(scores) {
         if (!scores.length) {
-            leaderboardBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Sé el primero en registrar un récord</td></tr>`;
+            scoresBody.innerHTML = `<tr><td colspan="4" class="table-empty">Sé el primero en registrar una puntuación</td></tr>`;
             return;
         }
 
+        const currentUser = window.ApiClient.getUsername().toLowerCase();
         let html = '';
-        scores.forEach(s => {
-            let rankBadge = `#${s.rank}`;
-            let rankClass = '';
-            if (s.rank === 1) { rankBadge = '🥇 #1'; rankClass = 'rank-gold'; }
-            else if (s.rank === 2) { rankBadge = '🥈 #2'; rankClass = 'rank-silver'; }
-            else if (s.rank === 3) { rankBadge = '🥉 #3'; rankClass = 'rank-bronze'; }
+
+        scores.forEach((s) => {
+            const isMe = currentUser && s.username.toLowerCase() === currentUser;
+            const classes = [];
+            if (s.rank <= 3) classes.push(`rank-${s.rank}`);
+            if (isMe) classes.push('is-me');
 
             html += `
-                <tr class="${rankClass}">
-                    <td class="col-rank">${rankBadge}</td>
-                    <td class="col-user"><strong>${escapeHtml(s.username)}</strong></td>
-                    <td class="col-pts">${Number(s.score).toLocaleString()}</td>
+                <tr class="${classes.join(' ')}">
+                    <td class="col-rank">#${s.rank}</td>
+                    <td class="col-player">${escapeHtml(s.username)}</td>
+                    <td class="col-score">${Number(s.score).toLocaleString()}</td>
                     <td class="col-date">${escapeHtml(s.date || '')}</td>
                 </tr>
             `;
         });
-        leaderboardBody.innerHTML = html;
+
+        scoresBody.innerHTML = html;
     }
 
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+    // Modal de Ajustes y Cambio de Contraseña
+    function openSettingsModal() {
+        if (game.state === 'PLAYING') game.togglePause();
+
+        settingsErrorMsg.style.display = 'none';
+        settingsSuccessMsg.style.display = 'none';
+        currentPasswordInput.value = '';
+        newPasswordInput.value = '';
+        confirmPasswordInput.value = '';
+        updateSettingsRules();
+        settingsUsernameLabel.textContent = window.ApiClient.getUsername();
+
+        settingsModal.classList.add('active');
+        setTimeout(() => currentPasswordInput.focus(), 60);
     }
 
-    // Guardar Puntuación
-    scoreForm.addEventListener('submit', async (e) => {
+    function closeSettingsModal() {
+        settingsModal.classList.remove('active');
+    }
+
+    changePwdForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = inputPlayer.value.trim();
-        if (!username) return;
+        settingsErrorMsg.style.display = 'none';
+        settingsSuccessMsg.style.display = 'none';
 
-        btnSaveScore.disabled = true;
-        btnSaveScore.textContent = 'Guardando...';
+        const currentPassword = currentPasswordInput.value;
+        const newPassword     = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (!currentPassword || !newPassword || !confirmPassword) return;
+
+        if (newPassword !== confirmPassword) {
+            settingsErrorMsg.textContent = 'Las contraseñas nuevas no coinciden.';
+            settingsErrorMsg.style.display = 'block';
+            return;
+        }
+
+        if (currentPassword === newPassword) {
+            settingsErrorMsg.textContent = 'La nueva contraseña debe ser diferente a la actual.';
+            settingsErrorMsg.style.display = 'block';
+            return;
+        }
+
+        const check = checkPwdCriteria(newPassword, window.ApiClient.getUsername());
+        if (!check.valid) {
+            settingsErrorMsg.textContent = 'Cumple con los 4 requisitos para la nueva contraseña.';
+            settingsErrorMsg.style.display = 'block';
+            newPasswordInput.focus();
+            return;
+        }
+
+        btnChangePwdSubmit.disabled = true;
 
         try {
-            const res = await fetch('api.php?action=submit_score', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, score: currentScore })
+            const res = await window.ApiClient.request('change_password', {
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
             });
 
-            const json = await res.json();
-            if (json.success) {
-                saveNotice.textContent = `¡Puntuación guardada! Rango #${json.data.rank}`;
-                saveNotice.style.display = 'block';
-                scoreForm.style.display = 'none';
-                await loadLeaderboard();
+            if (res && res.success) {
+                if (res.data && res.data.token) {
+                    window.ApiClient.setSession(res.data.token, res.data.username || window.ApiClient.getUsername());
+                }
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+                updateSettingsRules();
+
+                settingsSuccessMsg.textContent = 'Contraseña actualizada correctamente.';
+                settingsSuccessMsg.style.display = 'block';
             } else {
-                alert(json.message || 'Error al guardar');
+                settingsErrorMsg.textContent = (res && res.message) ? res.message : 'No se pudo cambiar la contraseña.';
+                settingsErrorMsg.style.display = 'block';
             }
         } catch (err) {
-            alert('Error de conexión al guardar puntuación');
+            settingsErrorMsg.textContent = 'Error de conexión con el servidor.';
+            settingsErrorMsg.style.display = 'block';
         } finally {
-            btnSaveScore.disabled = false;
-            btnSaveScore.textContent = 'Guardar';
+            btnChangePwdSubmit.disabled = false;
         }
     });
 
-    // Botones de acción
-    btnNewGame.addEventListener('click', () => {
+    // Eventos generales
+    btnPlayGame.addEventListener('click', () => {
         closeScoreModal();
         game.start();
     });
@@ -181,34 +462,29 @@ document.addEventListener('DOMContentLoaded', () => {
         game.start();
     });
 
-    btnViewScores.addEventListener('click', () => {
-        openScoreModal(false);
+    btnShowScores.addEventListener('click', openLeaderboardModal);
+    btnCloseModal.addEventListener('click', closeScoreModal);
+    btnSettings.addEventListener('click', openSettingsModal);
+    btnCloseSettings.addEventListener('click', closeSettingsModal);
+
+    btnToggleSound.addEventListener('click', () => {
+        const active = game.sound.toggle();
+        soundIconOn.style.display = active ? 'block' : 'none';
+        soundIconOff.style.display = active ? 'none' : 'block';
     });
 
-    btnCloseModal.addEventListener('click', () => {
-        closeScoreModal();
-    });
-
-    // Telemetría
-    function updateDbStatus(ok) {
-        if (ok) {
-            dbStatusDot.className = 'status-dot online';
-            dbStatusTxt.textContent = 'Conectada';
-            dbStatusTxt.style.color = '#2ec4b6';
-        } else {
-            dbStatusDot.className = 'status-dot offline';
-            dbStatusTxt.textContent = 'Desconectada';
-            dbStatusTxt.style.color = '#e63946';
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeScoreModal();
+            closeSettingsModal();
         }
-    }
+    });
 
-    // Comprobar estado inicial del servidor
-    fetch('api.php?action=status')
-        .then(r => r.json())
-        .then(res => {
-            if (res.success && res.data) {
-                updateDbStatus(res.data.db_connected);
-            }
-        })
-        .catch(() => updateDbStatus(false));
+    [scoreModal, settingsModal].forEach((modal) => {
+        modal.addEventListener('mousedown', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+    });
+
+    initSessionGate();
 });
