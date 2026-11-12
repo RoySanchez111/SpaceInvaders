@@ -13,6 +13,9 @@ defined('DB_USER') or define('DB_USER', getenv('DB_USER') ?: 'admin_bd');
 defined('DB_PASS') or define('DB_PASS', getenv('DB_PASS') ?: 'AdminPass2026!');
 defined('DB_CHARSET') or define('DB_CHARSET', 'utf8mb4');
 
+// Clave secreta para cifrado y firma de paquetes (AES-256-CBC + HMAC-SHA256)
+defined('APP_SECURITY_KEY') or define('APP_SECURITY_KEY', getenv('APP_SECURITY_KEY') ?: 'SpaceInvaders2026_SecureKey_Auth_AES');
+
 /**
  * Obtiene la instancia singleton de la conexión PDO.
  * 

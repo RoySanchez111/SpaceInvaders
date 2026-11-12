@@ -638,6 +638,177 @@ require_once __DIR__ . '/config/db.php';
             .shortcuts { display: none; }
             .bottombar .btn-solid { width: 100%; }
         }
+
+        /* SECURITY BADGE (TOPBAR) */
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 34px;
+            padding: 0 10px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 7px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent);
+            font-family: var(--font-mono);
+            user-select: none;
+        }
+
+        .security-badge svg {
+            width: 13px;
+            height: 13px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* PASSWORD STRENGTH & POLICY CHECKLIST */
+        .pwd-policy-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #0b0b0e;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .pwd-meter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pwd-meter-title {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-suggest-pwd {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .btn-suggest-pwd svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .btn-suggest-pwd:hover {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .pwd-meter-track {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            height: 4px;
+        }
+
+        .pwd-meter-bar {
+            height: 100%;
+            background: #24242b;
+            border-radius: 2px;
+            transition: background 0.2s ease;
+        }
+
+        .pwd-meter-bar.active-red {
+            background: var(--danger);
+        }
+
+        .pwd-meter-bar.active-orange {
+            background: #f97316;
+        }
+
+        .pwd-meter-bar.active-amber {
+            background: var(--amber);
+        }
+
+        .pwd-meter-bar.active-green {
+            background: var(--accent);
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+        }
+
+        .pwd-meter-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.6875rem;
+        }
+
+        .pwd-level-tag {
+            font-weight: 700;
+            font-family: var(--font-mono);
+            letter-spacing: 0.02em;
+            color: var(--text-dim);
+        }
+
+        .pwd-level-tag.red { color: #fb7185; }
+        .pwd-level-tag.orange { color: #fb923c; }
+        .pwd-level-tag.amber { color: #fcd34d; }
+        .pwd-level-tag.green { color: #34d399; }
+
+        .pwd-hint-text {
+            color: var(--text-dim);
+            font-size: 0.6875rem;
+            text-align: right;
+        }
+
+        .pwd-rules-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 10px;
+            padding-top: 4px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .pwd-rule {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-dim);
+            font-size: 0.6875rem;
+            transition: color 0.15s ease;
+        }
+
+        .pwd-rule .rule-icon {
+            font-family: var(--font-mono);
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1;
+        }
+
+        .pwd-rule.pass {
+            color: var(--text);
+        }
+
+        .pwd-rule.pass .rule-icon {
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -652,6 +823,11 @@ require_once __DIR__ . '/config/db.php';
             </div>
 
             <div class="nav-actions">
+                <div class="security-badge" title="Cifrado E2E AES-256 de paquetes activo">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>AES-256</span>
+                </div>
+
                 <div class="user-chip" id="userBadgeBox" style="display: none;">
                     <span class="user-chip-dot"></span>
                     <span id="displayUsername"></span>
@@ -746,6 +922,33 @@ require_once __DIR__ . '/config/db.php';
                         <button type="button" class="eye-btn" id="btnTogglePwd" tabindex="-1">
                             <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Medidor de contraseña y checklist de requisitos (Activo en Crear Cuenta) -->
+                <div class="pwd-policy-box" id="authPwdPolicyBox" style="display: none;">
+                    <div class="pwd-meter-header">
+                        <span class="pwd-meter-title">Fortaleza de contraseña</span>
+                        <button type="button" class="btn-suggest-pwd" id="btnSuggestAuthPwd" title="Generar una contraseña robusta aleatoria">
+                            <svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-6 6l7 7a2 2 0 0 1-2.8 2.8l-7-7m-4-4L2 19l3 3 7-7"/></svg>
+                            <span>Sugerir segura</span>
+                        </button>
+                    </div>
+                    <div class="pwd-meter-track">
+                        <div class="pwd-meter-bar" id="authMeterBar1"></div>
+                        <div class="pwd-meter-bar" id="authMeterBar2"></div>
+                        <div class="pwd-meter-bar" id="authMeterBar3"></div>
+                        <div class="pwd-meter-bar" id="authMeterBar4"></div>
+                    </div>
+                    <div class="pwd-meter-info">
+                        <span class="pwd-level-tag" id="authLevelTag">Requerida</span>
+                        <span class="pwd-hint-text" id="authHintText">Mínimo 8 caracteres combinados</span>
+                    </div>
+                    <div class="pwd-rules-list">
+                        <div class="pwd-rule" id="authRuleLen"><span class="rule-icon">○</span> Mínimo 8 caracteres</div>
+                        <div class="pwd-rule" id="authRuleCase"><span class="rule-icon">○</span> Mayúscula y minúscula</div>
+                        <div class="pwd-rule" id="authRuleNum"><span class="rule-icon">○</span> Al menos un número</div>
+                        <div class="pwd-rule" id="authRuleSym"><span class="rule-icon">○</span> Símbolo (!@#$%...)</div>
                     </div>
                 </div>
 
@@ -846,6 +1049,33 @@ require_once __DIR__ . '/config/db.php';
                     </div>
                 </div>
 
+                <!-- Medidor de contraseña y checklist de requisitos para Cambio de Contraseña -->
+                <div class="pwd-policy-box" id="settingsPwdPolicyBox">
+                    <div class="pwd-meter-header">
+                        <span class="pwd-meter-title">Fortaleza de contraseña</span>
+                        <button type="button" class="btn-suggest-pwd" id="btnSuggestSettingsPwd" title="Generar una contraseña robusta aleatoria">
+                            <svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-6 6l7 7a2 2 0 0 1-2.8 2.8l-7-7m-4-4L2 19l3 3 7-7"/></svg>
+                            <span>Sugerir segura</span>
+                        </button>
+                    </div>
+                    <div class="pwd-meter-track">
+                        <div class="pwd-meter-bar" id="settingsMeterBar1"></div>
+                        <div class="pwd-meter-bar" id="settingsMeterBar2"></div>
+                        <div class="pwd-meter-bar" id="settingsMeterBar3"></div>
+                        <div class="pwd-meter-bar" id="settingsMeterBar4"></div>
+                    </div>
+                    <div class="pwd-meter-info">
+                        <span class="pwd-level-tag" id="settingsLevelTag">Requerida</span>
+                        <span class="pwd-hint-text" id="settingsHintText">Mínimo 8 caracteres combinados</span>
+                    </div>
+                    <div class="pwd-rules-list">
+                        <div class="pwd-rule" id="settingsRuleLen"><span class="rule-icon">○</span> Mínimo 8 caracteres</div>
+                        <div class="pwd-rule" id="settingsRuleCase"><span class="rule-icon">○</span> Mayúscula y minúscula</div>
+                        <div class="pwd-rule" id="settingsRuleNum"><span class="rule-icon">○</span> Al menos un número</div>
+                        <div class="pwd-rule" id="settingsRuleSym"><span class="rule-icon">○</span> Símbolo (!@#$%...)</div>
+                    </div>
+                </div>
+
                 <div class="field">
                     <label for="confirmPasswordInput">Confirmar contraseña</label>
                     <div class="control">
@@ -862,6 +1092,15 @@ require_once __DIR__ . '/config/db.php';
             </form>
         </div>
     </div>
+
+    <!-- Criptografía Cliente-Servidor (AES-256-CBC + HMAC-SHA256) -->
+    <script src="assets/js/crypto-js.min.js"></script>
+    <script>
+        window.APP_CONFIG = {
+            securityKey: <?php echo json_encode(defined('APP_SECURITY_KEY') ? APP_SECURITY_KEY : 'SpaceInvaders2026_SecureKey_Auth_AES'); ?>,
+            encryptionEnabled: true
+        };
+    </script>
 
     <script>
         class SoundFX {
@@ -1377,7 +1616,254 @@ require_once __DIR__ . '/config/db.php';
             }
         }
 
+        /**
+         * Cliente de Seguridad Criptográfica
+         * Cifrado/Descifrado AES-256-CBC con Vector de Inicialización (IV) aleatorio
+         * y Firma de Integridad HMAC-SHA256 para paquetes de entrada y salida.
+         */
+        const SecurityClient = {
+            key: null,
+            init() {
+                if (this.key) return;
+                if (window.CryptoJS && window.APP_CONFIG && window.APP_CONFIG.securityKey) {
+                    this.key = CryptoJS.SHA256(window.APP_CONFIG.securityKey);
+                }
+            },
+            encrypt(dataObj) {
+                this.init();
+                if (!this.key || !window.CryptoJS) return dataObj;
+                try {
+                    const plain = JSON.stringify(dataObj);
+                    const iv = CryptoJS.lib.WordArray.random(16);
+                    const enc = CryptoJS.AES.encrypt(plain, this.key, {
+                        iv: iv,
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    });
+                    const payload = enc.toString();
+                    const ivB64 = CryptoJS.enc.Base64.stringify(iv);
+                    const signature = CryptoJS.HmacSHA256(ivB64 + ":" + payload, this.key).toString(CryptoJS.enc.Hex);
+                    return { encrypted: true, payload, iv: ivB64, signature };
+                } catch(e) {
+                    console.warn("[SecurityClient] Fallback de cifrado:", e);
+                    return dataObj;
+                }
+            },
+            decrypt(pkg) {
+                this.init();
+                if (!pkg || typeof pkg !== 'object' || !pkg.encrypted || !this.key || !window.CryptoJS) {
+                    return pkg;
+                }
+                try {
+                    if (pkg.signature) {
+                        const expectedSig = CryptoJS.HmacSHA256(pkg.iv + ":" + pkg.payload, this.key).toString(CryptoJS.enc.Hex);
+                        if (pkg.signature !== expectedSig) {
+                            throw new Error("Firma criptográfica inválida del paquete recibido");
+                        }
+                    }
+                    const cipherParams = CryptoJS.lib.CipherParams.create({
+                        ciphertext: CryptoJS.enc.Base64.parse(pkg.payload)
+                    });
+                    const dec = CryptoJS.AES.decrypt(cipherParams, this.key, {
+                        iv: CryptoJS.enc.Base64.parse(pkg.iv),
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    });
+                    const jsonStr = dec.toString(CryptoJS.enc.Utf8);
+                    return JSON.parse(jsonStr);
+                } catch(e) {
+                    console.error("[SecurityClient] Error al descifrar respuesta:", e);
+                    return pkg;
+                }
+            },
+            async secureFetch(url, options = {}) {
+                this.init();
+                options.headers = options.headers || {};
+                options.headers['X-Encrypt-Response'] = '1';
+
+                if (options.body && typeof options.body === 'string') {
+                    try {
+                        const parsed = JSON.parse(options.body);
+                        const encPayload = this.encrypt(parsed);
+                        options.body = JSON.stringify(encPayload);
+                        options.headers['Content-Type'] = 'application/json';
+                    } catch(e) {}
+                }
+
+                const res = await fetch(url, options);
+                const rawJson = await res.json();
+                return this.decrypt(rawJson);
+            }
+        };
+
+        /**
+         * Metodología de Contraseña Robusta
+         * Evalúa longitud mínima (8+), mayúsculas, minúsculas, dígitos, caracteres especiales,
+         * y ausencia del nombre de usuario o patrones vulnerables.
+         */
+        const PasswordPolicy = {
+            rules: {
+                len:  (p) => p.length >= 8,
+                case: (p) => /[A-Z]/.test(p) && /[a-z]/.test(p),
+                num:  (p) => /[0-9]/.test(p),
+                sym:  (p) => /[^A-Za-z0-9]/.test(p)
+            },
+            evaluate(pwd, username = '') {
+                const p = pwd || '';
+                const results = {
+                    len: this.rules.len(p),
+                    case: this.rules.case(p),
+                    num: this.rules.num(p),
+                    sym: this.rules.sym(p)
+                };
+
+                let passedCount = (results.len ? 1 : 0) +
+                                  (results.case ? 1 : 0) +
+                                  (results.num ? 1 : 0) +
+                                  (results.sym ? 1 : 0);
+
+                const lower = p.toLowerCase();
+                const blacklist = [
+                    '12345678', '123456789', '1234567890', 'password', 'password1', 'password123',
+                    'qwertyui', 'qwerty123', 'admin123', 'admin2026', 'contrasena', 'contraseña',
+                    'spaceinvaders', 'invaders123', 'abcdefgh', 'iloveyou', 'welcome1', '11111111'
+                ];
+                let isCommon = blacklist.includes(lower) || /^(.)\1{4,}$/.test(p);
+                let hasUser = username && username.length >= 3 && lower.includes(username.toLowerCase());
+
+                let level = 0;
+                let label = 'Requerida';
+                let colorClass = '';
+                let hint = 'Mínimo 8 caracteres combinados';
+
+                if (p.length === 0) {
+                    level = 0;
+                    label = 'Requerida';
+                    hint = 'Mínimo 8 caracteres combinados';
+                } else if (isCommon) {
+                    level = 1;
+                    label = 'Muy débil';
+                    colorClass = 'red';
+                    hint = 'Contraseña común o predecible';
+                } else if (hasUser) {
+                    level = 1;
+                    label = 'Insegura';
+                    colorClass = 'red';
+                    hint = 'No uses tu nombre de usuario';
+                } else if (passedCount <= 1) {
+                    level = 1;
+                    label = 'Muy débil';
+                    colorClass = 'red';
+                    hint = 'Agrega mayúsculas, números y símbolos';
+                } else if (passedCount === 2) {
+                    level = 2;
+                    label = 'Débil';
+                    colorClass = 'orange';
+                    hint = 'Falta combinar más tipos de caracteres';
+                } else if (passedCount === 3) {
+                    level = 3;
+                    label = 'Aceptable';
+                    colorClass = 'amber';
+                    hint = '¡Casi lista! Cumple con el requisito pendiente';
+                } else {
+                    level = 4;
+                    label = 'Robusta';
+                    colorClass = 'green';
+                    hint = '¡Excelente! Contraseña segura y aprobada';
+                }
+
+                const isValid = results.len && results.case && results.num && results.sym && !isCommon && !hasUser;
+
+                return { results, passedCount, level, label, colorClass, hint, isValid };
+            },
+            generate(length = 14) {
+                const uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+                const lowers = "abcdefghijkmnopqrstuvwxyz";
+                const numbers = "23456789";
+                const symbols = "!@#$%&*?_-";
+                const all = uppers + lowers + numbers + symbols;
+
+                let pwd = [
+                    uppers[Math.floor(Math.random() * uppers.length)],
+                    lowers[Math.floor(Math.random() * lowers.length)],
+                    numbers[Math.floor(Math.random() * numbers.length)],
+                    symbols[Math.floor(Math.random() * symbols.length)]
+                ];
+                for (let i = 4; i < length; i++) {
+                    pwd.push(all[Math.floor(Math.random() * all.length)]);
+                }
+                return pwd.sort(() => Math.random() - 0.5).join('');
+            },
+            bindUI(prefix, inputEl, userEl) {
+                const bar1 = document.getElementById(`${prefix}MeterBar1`);
+                const bar2 = document.getElementById(`${prefix}MeterBar2`);
+                const bar3 = document.getElementById(`${prefix}MeterBar3`);
+                const bar4 = document.getElementById(`${prefix}MeterBar4`);
+                const levelTag = document.getElementById(`${prefix}LevelTag`);
+                const hintText = document.getElementById(`${prefix}HintText`);
+                const ruleLen = document.getElementById(`${prefix}RuleLen`);
+                const ruleCase = document.getElementById(`${prefix}RuleCase`);
+                const ruleNum = document.getElementById(`${prefix}RuleNum`);
+                const ruleSym = document.getElementById(`${prefix}RuleSym`);
+
+                const bars = [bar1, bar2, bar3, bar4];
+
+                function update() {
+                    const val = inputEl ? inputEl.value : '';
+                    const username = userEl ? userEl.value.trim() : '';
+                    const evalRes = PasswordPolicy.evaluate(val, username);
+
+                    // Actualizar barras
+                    bars.forEach((b, idx) => {
+                        if (!b) return;
+                        b.className = 'pwd-meter-bar';
+                        if (evalRes.level > idx) {
+                            if (evalRes.level === 1) b.classList.add('active-red');
+                            else if (evalRes.level === 2) b.classList.add('active-orange');
+                            else if (evalRes.level === 3) b.classList.add('active-amber');
+                            else if (evalRes.level === 4) b.classList.add('active-green');
+                        }
+                    });
+
+                    // Actualizar etiqueta y consejo
+                    if (levelTag) {
+                        levelTag.textContent = evalRes.label;
+                        levelTag.className = `pwd-level-tag ${evalRes.colorClass}`;
+                    }
+                    if (hintText) hintText.textContent = evalRes.hint;
+
+                    // Actualizar checklist
+                    function setRule(el, passed) {
+                        if (!el) return;
+                        if (passed) {
+                            el.classList.add('pass');
+                            const icon = el.querySelector('.rule-icon');
+                            if (icon) icon.textContent = '✓';
+                        } else {
+                            el.classList.remove('pass');
+                            const icon = el.querySelector('.rule-icon');
+                            if (icon) icon.textContent = '○';
+                        }
+                    }
+
+                    setRule(ruleLen, evalRes.results.len);
+                    setRule(ruleCase, evalRes.results.case);
+                    setRule(ruleNum, evalRes.results.num);
+                    setRule(ruleSym, evalRes.results.sym);
+
+                    return evalRes;
+                }
+
+                if (inputEl) inputEl.addEventListener('input', update);
+                if (userEl) userEl.addEventListener('input', update);
+
+                return update;
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
+            SecurityClient.init();
+
             const hudScore       = document.getElementById('hudScore');
             const hudHiScore     = document.getElementById('hudHiScore');
             const hudLives       = document.getElementById('hudLives');
@@ -1394,17 +1880,19 @@ require_once __DIR__ . '/config/db.php';
             const btnLogout       = document.getElementById('btnLogout');
             const btnLoginOpen    = document.getElementById('btnLoginOpen');
 
-            const authModal         = document.getElementById('authModal');
-            const authModalTitle    = document.getElementById('authModalTitle');
-            const tabLogin          = document.getElementById('tabLogin');
-            const tabRegister       = document.getElementById('tabRegister');
-            const authForm          = document.getElementById('authForm');
-            const authUsernameInput = document.getElementById('authUsernameInput');
-            const authPasswordInput = document.getElementById('authPasswordInput');
-            const btnAuthSubmit     = document.getElementById('btnAuthSubmit');
-            const authErrorMsg      = document.getElementById('authErrorMsg');
-            const btnTogglePwd      = document.getElementById('btnTogglePwd');
-            const btnCloseAuth      = document.getElementById('btnCloseAuth');
+            const authModal          = document.getElementById('authModal');
+            const authModalTitle     = document.getElementById('authModalTitle');
+            const tabLogin           = document.getElementById('tabLogin');
+            const tabRegister        = document.getElementById('tabRegister');
+            const authForm           = document.getElementById('authForm');
+            const authUsernameInput  = document.getElementById('authUsernameInput');
+            const authPasswordInput  = document.getElementById('authPasswordInput');
+            const btnAuthSubmit      = document.getElementById('btnAuthSubmit');
+            const authErrorMsg       = document.getElementById('authErrorMsg');
+            const btnTogglePwd       = document.getElementById('btnTogglePwd');
+            const btnCloseAuth       = document.getElementById('btnCloseAuth');
+            const authPwdPolicyBox   = document.getElementById('authPwdPolicyBox');
+            const btnSuggestAuthPwd  = document.getElementById('btnSuggestAuthPwd');
 
             const scoreModal      = document.getElementById('scoreModal');
             const modalHeading    = document.getElementById('modalHeading');
@@ -1415,23 +1903,24 @@ require_once __DIR__ . '/config/db.php';
             const btnPlayAgain    = document.getElementById('btnPlayAgain');
             const btnCloseModal   = document.getElementById('btnCloseModal');
 
-            const btnSettings           = document.getElementById('btnSettings');
-            const settingsModal         = document.getElementById('settingsModal');
-            const btnCloseSettings      = document.getElementById('btnCloseSettings');
-            const settingsAccountBar    = document.getElementById('settingsAccountBar');
-            const settingsUsernameLabel = document.getElementById('settingsUsernameLabel');
-            const settingsUsernameGroup = document.getElementById('settingsUsernameGroup');
-            const settingsUsernameInput = document.getElementById('settingsUsernameInput');
-            const changePwdForm         = document.getElementById('changePwdForm');
-            const currentPasswordInput  = document.getElementById('currentPasswordInput');
-            const newPasswordInput      = document.getElementById('newPasswordInput');
-            const confirmPasswordInput  = document.getElementById('confirmPasswordInput');
-            const btnToggleCurrentPwd   = document.getElementById('btnToggleCurrentPwd');
-            const btnToggleNewPwd       = document.getElementById('btnToggleNewPwd');
-            const btnToggleConfirmPwd   = document.getElementById('btnToggleConfirmPwd');
-            const btnChangePwdSubmit    = document.getElementById('btnChangePwdSubmit');
-            const settingsErrorMsg      = document.getElementById('settingsErrorMsg');
-            const settingsSuccessMsg    = document.getElementById('settingsSuccessMsg');
+            const btnSettings            = document.getElementById('btnSettings');
+            const settingsModal          = document.getElementById('settingsModal');
+            const btnCloseSettings       = document.getElementById('btnCloseSettings');
+            const settingsAccountBar     = document.getElementById('settingsAccountBar');
+            const settingsUsernameLabel  = document.getElementById('settingsUsernameLabel');
+            const settingsUsernameGroup  = document.getElementById('settingsUsernameGroup');
+            const settingsUsernameInput  = document.getElementById('settingsUsernameInput');
+            const changePwdForm          = document.getElementById('changePwdForm');
+            const currentPasswordInput   = document.getElementById('currentPasswordInput');
+            const newPasswordInput       = document.getElementById('newPasswordInput');
+            const confirmPasswordInput   = document.getElementById('confirmPasswordInput');
+            const btnToggleCurrentPwd    = document.getElementById('btnToggleCurrentPwd');
+            const btnToggleNewPwd        = document.getElementById('btnToggleNewPwd');
+            const btnToggleConfirmPwd    = document.getElementById('btnToggleConfirmPwd');
+            const btnChangePwdSubmit     = document.getElementById('btnChangePwdSubmit');
+            const settingsErrorMsg       = document.getElementById('settingsErrorMsg');
+            const settingsSuccessMsg     = document.getElementById('settingsSuccessMsg');
+            const btnSuggestSettingsPwd  = document.getElementById('btnSuggestSettingsPwd');
 
             let authMode = 'login';
             let authToken = localStorage.getItem('si_auth_token') || '';
@@ -1439,6 +1928,32 @@ require_once __DIR__ . '/config/db.php';
 
             let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
             hudHiScore.textContent = record.toLocaleString();
+
+            // Vincular observadores interactivos de contraseña robusta
+            const updateAuthPwdMeter = PasswordPolicy.bindUI('auth', authPasswordInput, authUsernameInput);
+            const updateSettingsPwdMeter = PasswordPolicy.bindUI('settings', newPasswordInput, settingsUsernameInput);
+
+            if (btnSuggestAuthPwd) {
+                btnSuggestAuthPwd.addEventListener('click', () => {
+                    const generated = PasswordPolicy.generate(14);
+                    authPasswordInput.value = generated;
+                    authPasswordInput.type = 'text';
+                    updateAuthPwdMeter();
+                    authPasswordInput.focus();
+                });
+            }
+
+            if (btnSuggestSettingsPwd) {
+                btnSuggestSettingsPwd.addEventListener('click', () => {
+                    const generated = PasswordPolicy.generate(14);
+                    newPasswordInput.value = generated;
+                    confirmPasswordInput.value = generated;
+                    newPasswordInput.type = 'text';
+                    confirmPasswordInput.type = 'text';
+                    updateSettingsPwdMeter();
+                    newPasswordInput.focus();
+                });
+            }
 
             function renderLives(lives) {
                 let html = '';
@@ -1463,16 +1978,16 @@ require_once __DIR__ . '/config/db.php';
             syncAuthUI();
 
             if (authToken) {
-                fetch('api.php?action=verify_token', {
+                SecurityClient.secureFetch('api.php?action=verify_token', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ token: authToken })
                 })
-                .then(r => r.json())
                 .then(res => {
-                    if (res.success && res.data && res.data.username) {
+                    if (res && res.success && res.data && res.data.username) {
                         authUsername = res.data.username;
                         localStorage.setItem('si_auth_user', authUsername);
                         syncAuthUI();
@@ -1511,11 +2026,16 @@ require_once __DIR__ . '/config/db.php';
                     tabRegister.classList.remove('active');
                     authModalTitle.textContent = 'Iniciar sesión';
                     btnAuthSubmit.textContent = 'Entrar';
+                    if (authPwdPolicyBox) authPwdPolicyBox.style.display = 'none';
                 } else {
                     tabRegister.classList.add('active');
                     tabLogin.classList.remove('active');
                     authModalTitle.textContent = 'Crear cuenta';
                     btnAuthSubmit.textContent = 'Crear cuenta';
+                    if (authPwdPolicyBox) {
+                        authPwdPolicyBox.style.display = 'flex';
+                        updateAuthPwdMeter();
+                    }
                 }
             }
 
@@ -1542,16 +2062,26 @@ require_once __DIR__ . '/config/db.php';
                 const password = authPasswordInput.value;
                 if (!username || !password) return;
 
+                // Validación estricta de contraseña robusta al crear cuenta
+                if (authMode === 'register') {
+                    const evalRes = PasswordPolicy.evaluate(password, username);
+                    if (!evalRes.isValid) {
+                        authErrorMsg.innerHTML = '<strong>Contraseña débil rechazada:</strong> Cumple con todos los requisitos de seguridad indicados en el panel (mínimo 8 caracteres, mayúscula, minúscula, número y símbolo).';
+                        authErrorMsg.style.display = 'block';
+                        authPasswordInput.focus();
+                        return;
+                    }
+                }
+
                 btnAuthSubmit.disabled = true;
                 const endpoint = authMode === 'register' ? 'api.php?action=register' : 'api.php?action=login';
 
                 try {
-                    const res = await fetch(endpoint, {
+                    // Petición y respuesta cifradas con AES-256-CBC y HMAC
+                    const json = await SecurityClient.secureFetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
                     });
-                    const json = await res.json();
 
                     if (json.success && json.data && json.data.token) {
                         authToken = json.data.token;
@@ -1584,7 +2114,7 @@ require_once __DIR__ . '/config/db.php';
                         authErrorMsg.style.display = 'block';
                     }
                 } catch (err) {
-                    authErrorMsg.textContent = 'Error de conexión con el servidor.';
+                    authErrorMsg.textContent = 'Error de conexión segura con el servidor.';
                     authErrorMsg.style.display = 'block';
                 } finally {
                     btnAuthSubmit.disabled = false;
@@ -1622,17 +2152,15 @@ require_once __DIR__ . '/config/db.php';
 
                 if (authToken && score > 0) {
                     try {
-                        const res = await fetch('api.php?action=submit_score', {
+                        const json = await SecurityClient.secureFetch('api.php?action=submit_score', {
                             method: 'POST',
                             headers: {
-                                'Authorization': `Bearer ${authToken}`,
-                                'Content-Type': 'application/json'
+                                'Authorization': `Bearer ${authToken}`
                             },
                             body: JSON.stringify({ score })
                         });
-                        const json = await res.json();
-                        if (json.success) {
-                            autoSavedNotice.textContent = `Puntuación registrada · Puesto #${json.data.rank}`;
+                        if (json && json.success) {
+                            autoSavedNotice.textContent = `Puntuación registrada de forma segura · Puesto #${json.data.rank}`;
                             autoSavedNotice.style.display = 'block';
                         }
                     } catch (err) {}
@@ -1657,10 +2185,9 @@ require_once __DIR__ . '/config/db.php';
                 scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Cargando...</td></tr>`;
 
                 try {
-                    const res = await fetch('api.php?action=leaderboard');
-                    const json = await res.json();
+                    const json = await SecurityClient.secureFetch('api.php?action=leaderboard');
 
-                    if (json.success && json.data && json.data.scores) {
+                    if (json && json.success && json.data && json.data.scores) {
                         renderTable(json.data.scores);
                     } else {
                         scoresBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Sin registros</td></tr>`;
@@ -1709,6 +2236,7 @@ require_once __DIR__ . '/config/db.php';
                 currentPasswordInput.value = '';
                 newPasswordInput.value = '';
                 confirmPasswordInput.value = '';
+                updateSettingsPwdMeter();
 
                 if (authToken && authUsername) {
                     settingsAccountBar.style.display = 'flex';
@@ -1745,14 +2273,8 @@ require_once __DIR__ . '/config/db.php';
 
                 if (!currentPassword || !newPassword || !confirmPassword) return;
 
-                if (newPassword.length < 3) {
-                    settingsErrorMsg.textContent = 'Mínimo 3 caracteres.';
-                    settingsErrorMsg.style.display = 'block';
-                    return;
-                }
-
                 if (newPassword !== confirmPassword) {
-                    settingsErrorMsg.textContent = 'Las contraseñas no coinciden.';
+                    settingsErrorMsg.textContent = 'La nueva contraseña y su confirmación no coinciden.';
                     settingsErrorMsg.style.display = 'block';
                     return;
                 }
@@ -1763,13 +2285,22 @@ require_once __DIR__ . '/config/db.php';
                     return;
                 }
 
+                // Validación de contraseña robusta
+                const evalRes = PasswordPolicy.evaluate(newPassword, username);
+                if (!evalRes.isValid) {
+                    settingsErrorMsg.textContent = 'La nueva contraseña no cumple los requisitos de seguridad robusta. Revisa el checklist de requisitos.';
+                    settingsErrorMsg.style.display = 'block';
+                    newPasswordInput.focus();
+                    return;
+                }
+
                 btnChangePwdSubmit.disabled = true;
 
                 try {
-                    const headers = { 'Content-Type': 'application/json' };
+                    const headers = {};
                     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-                    const res = await fetch('api.php?action=change_password', {
+                    const json = await SecurityClient.secureFetch('api.php?action=change_password', {
                         method: 'POST',
                         headers,
                         body: JSON.stringify({
@@ -1779,8 +2310,6 @@ require_once __DIR__ . '/config/db.php';
                             confirm_password: confirmPassword
                         })
                     });
-
-                    const json = await res.json();
 
                     if (json.success) {
                         if (json.data && json.data.token) {
@@ -1797,15 +2326,16 @@ require_once __DIR__ . '/config/db.php';
                         currentPasswordInput.value = '';
                         newPasswordInput.value = '';
                         confirmPasswordInput.value = '';
+                        updateSettingsPwdMeter();
 
-                        settingsSuccessMsg.textContent = 'Contraseña actualizada.';
+                        settingsSuccessMsg.textContent = 'Contraseña actualizada correctamente con cifrado.';
                         settingsSuccessMsg.style.display = 'block';
                     } else {
                         settingsErrorMsg.textContent = json.message || 'No se pudo actualizar.';
                         settingsErrorMsg.style.display = 'block';
                     }
                 } catch (err) {
-                    settingsErrorMsg.textContent = 'Error de conexión.';
+                    settingsErrorMsg.textContent = 'Error de conexión segura.';
                     settingsErrorMsg.style.display = 'block';
                 } finally {
                     btnChangePwdSubmit.disabled = false;

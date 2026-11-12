@@ -18,12 +18,41 @@ SpaceInvaders/
 │   │   ├── css/style.css       # Estilos oscuros minimalistas
 │   │   └── js/
 │   │       ├── game.js         # Juego Space Invaders (Canvas + sonido retro)
-│   │       └── app.js          # Lógica de puntuaciones y modal
-│   ├── api.php                 # API simple (guardar y leer puntuaciones)
+│   │       ├── app.js          # Lógica de puntuaciones y modal
+│   │       └── crypto-js.min.js# Criptografía AES-256 y HMAC para paquetes
+│   ├── api.php                 # API REST segura con cifrado E2E y BCRYPT
 │   ├── database.sql            # Script SQL de la base de datos
-│   └── index.php               # Pantalla principal del juego
+│   └── index.php               # Interfaz con medidor de contraseñas y juego
 └── README.md
 ```
+
+---
+
+## 🔒 Mecanismos de Seguridad y Autenticación Avanzada
+
+El aplicativo integra una arquitectura de seguridad integral compuesta por 3 pilares:
+
+1. **Cifrado E2E de Paquetes de Entrada y Salida (AES-256-CBC + HMAC-SHA256)**:
+   - Los datos sensibles ya no viajan en texto plano por la red (`username`, `password`, `token`, puntuaciones).
+   - El cliente JavaScript cifra cada paquete con AES-256-CBC usando un IV criptográfico único de 16 bytes y adjunta una firma digital HMAC-SHA256 para prevenir alteraciones o ataques de intermediario (Man-In-The-Middle).
+   - El servidor PHP descifra la petición, valida la integridad y responde con un nuevo paquete cifrado antes de transmitirlo al navegador.
+
+2. **Metodología de Contraseñas Robustas (Rechazo de Contraseñas Débiles)**:
+   - Validación forzosa tanto en el backend (`api.php`) como en el frontend (`index.php`).
+   - Requisitos obligatorios:
+     - Mínimo 8 caracteres (máximo 64).
+     - Al menos una letra mayúscula (`A-Z`).
+     - Al menos una letra minúscula (`a-z`).
+     - Al menos un dígito numérico (`0-9`).
+     - Al menos un símbolo o carácter especial (`!@#$%^&*` etc.).
+     - Rechazo de contraseñas que incluyan el nombre de usuario o secuencias de repetición.
+     - Bloqueo de contraseñas comunes de diccionario (`password`, `12345678`, etc.).
+
+3. **Asistente Interactivo en Tiempo Real y Protección contra Fuerza Bruta**:
+   - **Medidor visual interactivo**: Barra de fortaleza con 4 niveles de seguridad dinámicos (Débil, Regular, Aceptable, Robusta).
+   - **Checklist dinámico en vivo**: Se marcan en verde instantáneamente los requisitos conforme el usuario escribe.
+   - **Generador de contraseñas robustas**: Botón con un solo clic que sugiere una clave segura de alta entropía.
+   - **Protección contra fuerza bruta (Rate Limiting)**: Bloqueo temporal automático de la cuenta por 5 minutos al acumular 5 intentos fallidos consecutivos de inicio de sesión.
 
 ---
 

@@ -1,7 +1,11 @@
 <?php
 /**
  * API REST para Space Invaders
- * Autenticación Segura con Token JSON y Contraseña HASH (BCRYPT)
+ * Autenticación y Transmisión Segura:
+ * - Cifrado E2E de paquetes de entrada y salida (AES-256-CBC + HMAC-SHA256)
+ * - Verificación de fortaleza de contraseña robusta (rechazo de contraseñas débiles)
+ * - Protección contra ataques de fuerza bruta (bloqueo por intentos fallidos)
+ * - Token JSON de sesión con HASH BCRYPT
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,15 +15,183 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/config/db.php';
 
+// Variable de estado que indica si la petición actual vino encriptada
+$isRequestEncrypted = false;
+
+/**
+ * Obtiene la clave binaria derivada de 256 bits para cifrado AES
+ */
+function getSecurityKey(): string {
+    return hash('sha256', APP_SECURITY_KEY, true);
+}
+
+/**
+ * Desencripta paquetes entrantes si vienen en formato encriptado
+ */
+function decryptInputPayload(?string $rawInput, bool &$wasEncrypted): ?array {
+    $wasEncrypted = false;
+    if (empty($rawInput)) return null;
+
+    $json = json_decode($rawInput, true);
+    if (!is_array($json)) return null;
+
+    // Detectar paquete cifrado
+    if (!empty($json['encrypted']) && !empty($json['payload']) && !empty($json['iv'])) {
+        $key = getSecurityKey();
+        $payload = (string)$json['payload'];
+        $iv = (string)$json['iv'];
+
+        // Verificar firma HMAC si está presente
+        if (!empty($json['signature'])) {
+            $expectedSig = hash_hmac('sha256', $iv . ':' . $payload, $key);
+            if (!hash_equals($expectedSig, (string)$json['signature'])) {
+                jsonOut(false, 'Paquete alterado: la firma criptográfica no coincide.', null, 400);
+            }
+        }
+
+        $rawCipher = base64_decode($payload);
+        $rawIv = base64_decode($iv);
+        if ($rawCipher === false || $rawIv === false || strlen($rawIv) !== 16) {
+            jsonOut(false, 'Estructura o longitud del paquete cifrado inválida.', null, 400);
+        }
+
+        $decrypted = openssl_decrypt($rawCipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $rawIv);
+        if ($decrypted === false) {
+            jsonOut(false, 'No se pudo descifrar el paquete de entrada.', null, 400);
+        }
+
+        $data = json_decode($decrypted, true);
+        if (!is_array($data)) {
+            jsonOut(false, 'El paquete descifrado no contiene un JSON válido.', null, 400);
+        }
+
+        $wasEncrypted = true;
+        return $data;
+    }
+
+    return $json;
+}
+
+/**
+ * Encripta la respuesta en un paquete AES-256-CBC con firma HMAC
+ */
+function encryptOutputData(array $responseArray): array {
+    $key = getSecurityKey();
+    $jsonPlain = json_encode($responseArray, JSON_UNESCAPED_UNICODE);
+    $iv = openssl_random_pseudo_bytes(16);
+    $cipher = openssl_encrypt($jsonPlain, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+
+    $b64Payload = base64_encode($cipher);
+    $b64Iv = base64_encode($iv);
+    $sig = hash_hmac('sha256', $b64Iv . ':' . $b64Payload, $key);
+
+    return [
+        'encrypted' => true,
+        'payload'   => $b64Payload,
+        'iv'        => $b64Iv,
+        'signature' => $sig,
+        'timestamp' => time()
+    ];
+}
+
+/**
+ * Emite la respuesta JSON (cifrada o en plano según contexto) y termina la ejecución
+ */
 function jsonOut(bool $ok, string $msg, $data = null, int $code = 200): void {
+    global $isRequestEncrypted;
     http_response_code($code);
-    echo json_encode([
+
+    $response = [
         'success'   => $ok,
         'message'   => $msg,
         'timestamp' => time(),
         'data'      => $data
-    ], JSON_UNESCAPED_UNICODE);
+    ];
+
+    // Verificar si el cliente solicitó cifrado explícito o si la petición fue cifrada
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $wantEnc = !empty($headers['X-Encrypt-Response'])
+            || !empty($headers['x-encrypt-response'])
+            || !empty($_SERVER['HTTP_X_ENCRYPT_RESPONSE'])
+            || (isset($_GET['enc']) && $_GET['enc'] === '1');
+
+    if (!empty($isRequestEncrypted) || $wantEnc) {
+        header('X-Payload-Encrypted: 1');
+        echo json_encode(encryptOutputData($response), JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    }
     exit;
+}
+
+/**
+ * Metodología de Contraseña Robusta
+ * Evalúa longitud, mayúsculas, minúsculas, dígitos, caracteres especiales y listas negras.
+ */
+function evaluatePasswordPolicy(string $password, string $username = ''): array {
+    $errors = [];
+    $score = 0; // 0 a 5
+
+    $len = mb_strlen($password);
+    if ($len < 8) {
+        $errors[] = "Debe tener al menos 8 caracteres (actual: {$len}).";
+    } else {
+        $score++;
+        if ($len >= 12) $score++;
+    }
+
+    if (!preg_match('/[A-Z]/', $password)) {
+        $errors[] = 'Debe incluir al menos una letra mayúscula (A-Z).';
+    } else {
+        $score++;
+    }
+
+    if (!preg_match('/[a-z]/', $password)) {
+        $errors[] = 'Debe incluir al menos una letra minúscula (a-z).';
+    } else {
+        $score++;
+    }
+
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = 'Debe incluir al menos un número (0-9).';
+    } else {
+        $score++;
+    }
+
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+        $errors[] = 'Debe incluir al menos un carácter especial o símbolo (!@#$%^&* etc.).';
+    } else {
+        $score++;
+    }
+
+    // No permitir que contenga el nombre de usuario
+    if (!empty($username) && mb_strlen($username) >= 3) {
+        if (stripos($password, $username) !== false) {
+            $errors[] = 'Por seguridad, la contraseña no puede contener tu nombre de usuario.';
+        }
+    }
+
+    // Lista negra de contraseñas débiles o triviales conocidas
+    $blacklist = [
+        '12345678', '123456789', '1234567890', 'password', 'password1', 'password123',
+        'qwertyui', 'qwerty123', 'admin123', 'admin2026', 'contrasena', 'contraseña',
+        'spaceinvaders', 'invaders123', 'abcdefgh', 'iloveyou', 'welcome1', 'master123',
+        'secret123', 'superman1', '11111111', '00000000', 'temporal1'
+    ];
+    if (in_array(strtolower($password), $blacklist, true)) {
+        $errors[] = 'Esta contraseña es demasiado común o predecible. Elige una más robusta.';
+    }
+
+    // Prohibir secuencias de caracteres repetidos idénticos (ej. aaaaaaaa)
+    if (preg_match('/^(.)\1{4,}$/', $password)) {
+        $errors[] = 'No se permiten caracteres repetidos de forma consecutiva.';
+    }
+
+    return [
+        'valid'  => empty($errors),
+        'errors' => $errors,
+        'score'  => min(5, $score)
+    ];
 }
 
 $pdo = getDatabaseConnection();
@@ -34,6 +206,8 @@ if ($pdo !== null) {
                 `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
                 `auth_token` VARCHAR(255) NULL,
                 `token_expires_at` DATETIME NULL,
+                `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+                `locked_until` DATETIME NULL,
                 `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 INDEX `idx_username` (`username`),
                 INDEX `idx_token` (`auth_token`)
@@ -48,7 +222,7 @@ if ($pdo !== null) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Si la tabla users ya existía de versiones anteriores sin password_hash o token, añadirlas
+        // Asegurar columnas requeridas si la tabla ya existía
         try { $pdo->exec("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `password_hash` VARCHAR(255) NOT NULL DEFAULT ''"); } catch(Exception $e1) {
             try { $pdo->exec("ALTER TABLE `users` ADD `password_hash` VARCHAR(255) NOT NULL DEFAULT ''"); } catch(Exception $e2) {}
         }
@@ -58,20 +232,28 @@ if ($pdo !== null) {
         try { $pdo->exec("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `token_expires_at` DATETIME NULL"); } catch(Exception $e1) {
             try { $pdo->exec("ALTER TABLE `users` ADD `token_expires_at` DATETIME NULL"); } catch(Exception $e2) {}
         }
+        try { $pdo->exec("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0"); } catch(Exception $e1) {
+            try { $pdo->exec("ALTER TABLE `users` ADD `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0"); } catch(Exception $e2) {}
+        }
+        try { $pdo->exec("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `locked_until` DATETIME NULL"); } catch(Exception $e1) {
+            try { $pdo->exec("ALTER TABLE `users` ADD `locked_until` DATETIME NULL"); } catch(Exception $e2) {}
+        }
     } catch (Exception $e) {
         error_log("[Database Setup Warning] " . $e->getMessage());
     }
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$action = $_GET['action'] ?? ($method === 'POST' ? 'submit_score' : 'leaderboard');
 
-// Leer datos JSON o form-urlencoded
+// 1. Descifrar datos JSON de entrada (o leer plano si no viene cifrado)
 $rawInput = file_get_contents('php://input');
-$payload = json_decode($rawInput, true);
+$payload = decryptInputPayload($rawInput, $isRequestEncrypted);
 if (!is_array($payload)) {
     $payload = $_POST;
 }
+
+// Determinar acción (puede venir en URL o dentro del paquete cifrado)
+$action = $payload['action'] ?? $_GET['action'] ?? ($method === 'POST' ? 'submit_score' : 'leaderboard');
 
 // Extraer Bearer Token del header HTTP o payload
 function extractToken(array $payload): ?string {
@@ -90,7 +272,7 @@ function cleanUsername(string $raw): string {
 }
 
 // -----------------------------------------------------------------------------
-// 1. REGISTRO DE USUARIO
+// 1. REGISTRO DE USUARIO (Con Verificación de Contraseña Robusta)
 // -----------------------------------------------------------------------------
 if ($action === 'register') {
     if ($method !== 'POST') jsonOut(false, 'Método HTTP inválido', null, 405);
@@ -101,8 +283,15 @@ if ($action === 'register') {
     if (mb_strlen($username) < 2 || mb_strlen($username) > 25) {
         jsonOut(false, 'El nombre debe tener entre 2 y 25 caracteres.', null, 400);
     }
-    if (mb_strlen($password) < 3) {
-        jsonOut(false, 'La contraseña debe tener al menos 3 caracteres.', null, 400);
+
+    // Metodología de contraseña robusta
+    $policy = evaluatePasswordPolicy($password, $username);
+    if (!$policy['valid']) {
+        jsonOut(false, 'Contraseña débil rechazada: ' . implode(' ', $policy['errors']), [
+            'weak_password' => true,
+            'policy_errors' => $policy['errors'],
+            'score'         => $policy['score']
+        ], 422);
     }
 
     if ($pdo === null) jsonOut(false, 'Base de datos no disponible.', null, 503);
@@ -122,8 +311,8 @@ if ($action === 'register') {
         $token = bin2hex(random_bytes(32));
 
         $stmt = $pdo->prepare("
-            INSERT INTO users (username, password_hash, auth_token, token_expires_at, created_at)
-            VALUES (:u, :p, :t, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())
+            INSERT INTO users (username, password_hash, auth_token, token_expires_at, failed_attempts, locked_until, created_at)
+            VALUES (:u, :p, :t, DATE_ADD(NOW(), INTERVAL 30 DAY), 0, NULL, NOW())
         ");
         $stmt->execute([
             ':u' => $username,
@@ -131,7 +320,7 @@ if ($action === 'register') {
             ':t' => $token
         ]);
 
-        jsonOut(true, '¡Cuenta creada exitosamente!', [
+        jsonOut(true, '¡Cuenta creada exitosamente con credenciales robustas!', [
             'username' => $username,
             'token'    => $token
         ], 201);
@@ -141,7 +330,7 @@ if ($action === 'register') {
 }
 
 // -----------------------------------------------------------------------------
-// 2. INICIO DE SESIÓN
+// 2. INICIO DE SESIÓN (Con Protección contra Fuerza Bruta)
 // -----------------------------------------------------------------------------
 if ($action === 'login') {
     if ($method !== 'POST') jsonOut(false, 'Método HTTP inválido', null, 405);
@@ -156,7 +345,11 @@ if ($action === 'login') {
     if ($pdo === null) jsonOut(false, 'Base de datos no disponible.', null, 503);
 
     try {
-        $stmt = $pdo->prepare("SELECT id, username, password_hash FROM users WHERE LOWER(username) = LOWER(:u)");
+        $stmt = $pdo->prepare("
+            SELECT id, username, password_hash, failed_attempts, locked_until 
+            FROM users 
+            WHERE LOWER(username) = LOWER(:u)
+        ");
         $stmt->execute([':u' => $username]);
         $user = $stmt->fetch();
 
@@ -164,16 +357,52 @@ if ($action === 'login') {
             jsonOut(false, 'Usuario no encontrado.', ['not_found' => true], 404);
         }
 
-        // Validar contraseña
-        if (!password_verify($password, $user['password_hash'])) {
-            jsonOut(false, 'Contraseña incorrecta.', null, 401);
+        // 1. Verificar si la cuenta se encuentra bloqueada por intentos fallidos
+        if (!empty($user['locked_until']) && strtotime($user['locked_until']) > time()) {
+            $remaining = strtotime($user['locked_until']) - time();
+            $mins = ceil($remaining / 60);
+            jsonOut(false, "Cuenta bloqueada temporalmente por seguridad tras 5 intentos fallidos. Intenta de nuevo en {$mins} minuto(s).", [
+                'locked' => true,
+                'remaining_seconds' => $remaining
+            ], 429);
         }
 
-        // Generar y actualizar Token JSON de sesión
+        // 2. Validar contraseña
+        if (!password_verify($password, $user['password_hash'])) {
+            $newAttempts = (int)($user['failed_attempts'] ?? 0) + 1;
+
+            if ($newAttempts >= 5) {
+                // Bloquear cuenta durante 5 minutos
+                $lockStmt = $pdo->prepare("
+                    UPDATE users 
+                    SET failed_attempts = :fa, locked_until = DATE_ADD(NOW(), INTERVAL 5 MINUTE) 
+                    WHERE id = :id
+                ");
+                $lockStmt->execute([':fa' => $newAttempts, ':id' => $user['id']]);
+
+                jsonOut(false, 'Has excedido el límite de 5 intentos fallidos. Tu cuenta ha sido bloqueada temporalmente por 5 minutos por seguridad.', [
+                    'locked' => true,
+                    'remaining_seconds' => 300
+                ], 429);
+            } else {
+                $attStmt = $pdo->prepare("UPDATE users SET failed_attempts = :fa WHERE id = :id");
+                $attStmt->execute([':fa' => $newAttempts, ':id' => $user['id']]);
+
+                $left = 5 - $newAttempts;
+                jsonOut(false, "Contraseña incorrecta. Te quedan {$left} intento(s) antes del bloqueo de seguridad.", [
+                    'attempts_left' => $left
+                ], 401);
+            }
+        }
+
+        // 3. Inicio exitoso: reiniciar contador de intentos fallidos y generar nuevo token
         $token = bin2hex(random_bytes(32));
         $updateStmt = $pdo->prepare("
             UPDATE users 
-            SET auth_token = :t, token_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY) 
+            SET auth_token = :t, 
+                token_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY),
+                failed_attempts = 0,
+                locked_until = NULL 
             WHERE id = :id
         ");
         $updateStmt->execute([':t' => $token, ':id' => $user['id']]);
@@ -215,7 +444,7 @@ if ($action === 'verify_token') {
 }
 
 // -----------------------------------------------------------------------------
-// 3.5 CAMBIAR CONTRASEÑA (DESDE AJUSTES)
+// 3.5 CAMBIAR CONTRASEÑA (Con Verificación de Contraseña Robusta)
 // -----------------------------------------------------------------------------
 if ($action === 'change_password') {
     if ($method !== 'POST') jsonOut(false, 'Método HTTP inválido', null, 405);
@@ -228,10 +457,6 @@ if ($action === 'change_password') {
 
     if (empty($currentPassword) || empty($newPassword)) {
         jsonOut(false, 'Por favor completa la contraseña actual y la nueva contraseña.', null, 400);
-    }
-
-    if (mb_strlen($newPassword) < 3) {
-        jsonOut(false, 'La nueva contraseña debe tener al menos 3 caracteres.', null, 400);
     }
 
     if ($newPassword !== $confirmPassword) {
@@ -273,13 +498,27 @@ if ($action === 'change_password') {
             jsonOut(false, 'La contraseña actual es incorrecta.', null, 401);
         }
 
+        // Validar que la nueva contraseña sea robusta
+        $policy = evaluatePasswordPolicy($newPassword, $user['username']);
+        if (!$policy['valid']) {
+            jsonOut(false, 'Nueva contraseña rechazada: ' . implode(' ', $policy['errors']), [
+                'weak_password' => true,
+                'policy_errors' => $policy['errors'],
+                'score'         => $policy['score']
+            ], 422);
+        }
+
         // Generar nuevo hash BCRYPT y renovar el token de sesión
         $newHash  = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 10]);
         $newToken = bin2hex(random_bytes(32));
 
         $updateStmt = $pdo->prepare("
             UPDATE users 
-            SET password_hash = :p, auth_token = :t, token_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
+            SET password_hash = :p, 
+                auth_token = :t, 
+                token_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY),
+                failed_attempts = 0,
+                locked_until = NULL
             WHERE id = :id
         ");
         $updateStmt->execute([
@@ -288,7 +527,7 @@ if ($action === 'change_password') {
             ':id' => $user['id']
         ]);
 
-        jsonOut(true, '¡Contraseña actualizada correctamente!', [
+        jsonOut(true, '¡Contraseña actualizada correctamente con directiva robusta!', [
             'username' => $user['username'],
             'token'    => $newToken
         ]);
@@ -325,7 +564,7 @@ if ($action === 'submit_score') {
         } catch (Exception $e) {}
     }
 
-    // 2. Si no hay token válido, rechazar o requerir login
+    // 2. Si no hay token válido, rechazar
     if (!$username) {
         jsonOut(false, 'Debes iniciar sesión para que tu puntuación quede registrada.', null, 401);
     }
@@ -388,6 +627,17 @@ if ($action === 'leaderboard') {
     } catch (PDOException $e) {
         jsonOut(false, 'Error al consultar puntuaciones', null, 500);
     }
+}
+
+// -----------------------------------------------------------------------------
+// 6. ESTADO DEL SISTEMA (Healthcheck)
+// -----------------------------------------------------------------------------
+if ($action === 'status') {
+    jsonOut(true, 'Servidor activo', [
+        'db_connected' => ($pdo !== null),
+        'encryption'   => 'AES-256-CBC + HMAC-SHA256',
+        'auth_policy'  => 'Strong Password Policy + Brute Force Protection'
+    ]);
 }
 
 jsonOut(false, 'Acción no válida', null, 400);

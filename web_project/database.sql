@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `password_hash` VARCHAR(255) NOT NULL,
     `auth_token` VARCHAR(255) NULL,
     `token_expires_at` DATETIME NULL,
+    `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+    `locked_until` DATETIME NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_username` (`username`),
     INDEX `idx_token` (`auth_token`)
