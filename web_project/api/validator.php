@@ -1,6 +1,6 @@
 <?php
 /**
- * Validadores de entrada y formato de usuario/contraseña
+ * Validadores de formato de jugador y contraseña robusta
  */
 
 function cleanUsername(string $raw): string {
@@ -17,11 +17,14 @@ function extractBearerToken(array $payload): ?string {
     return !empty($payload['token']) ? trim($payload['token']) : null;
 }
 
+/**
+ * Valida las reglas de contraseña robusta (aplicada en Crear Cuenta y en Cambiar Contraseña)
+ */
 function validatePasswordRules(string $password, string $username = ''): array {
     $errors = [];
 
     if (mb_strlen($password) < 8) {
-        $errors[] = 'Al menos 8 caracteres.';
+        $errors[] = 'Mínimo 8 caracteres.';
     }
     if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password)) {
         $errors[] = 'Mayúsculas y minúsculas.';
@@ -34,7 +37,7 @@ function validatePasswordRules(string $password, string $username = ''): array {
     }
 
     if (!empty($username) && mb_strlen($username) >= 3 && stripos($password, $username) !== false) {
-        $errors[] = 'No debe incluir tu nombre de usuario.';
+        $errors[] = 'No debe contener tu nombre de usuario.';
     }
 
     $common = [

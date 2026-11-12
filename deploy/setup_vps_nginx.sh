@@ -99,6 +99,9 @@ PACKAGES=(
     php-gd
     php-mbstring
     php-zip
+    python3
+    python3-opencv
+    python3-numpy
     phpmyadmin
     ufw
     curl

@@ -9,12 +9,13 @@ CREATE DATABASE IF NOT EXISTS `game_portal_db`
 USE `game_portal_db`;
 
 -- -----------------------------------------------------------------------------
--- Tabla de Usuarios con Contraseña HASH y Token JSON de Sesión
+-- Tabla de Usuarios
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `users` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password_hash` VARCHAR(255) NOT NULL,
+    `biometric_data` LONGTEXT NULL,
     `auth_token` VARCHAR(255) NULL,
     `token_expires_at` DATETIME NULL,
     `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0,

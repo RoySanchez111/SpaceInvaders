@@ -1,6 +1,6 @@
 <?php
 /**
- * Módulo de transporte de datos (transparente para la interfaz)
+ * Módulo de transporte de datos cliente-servidor
  */
 
 function getTransportKey(): string {

@@ -1,8 +1,7 @@
 /**
- * Controlador de flujo de pantallas, sesión, clasificación y ajustes
+ * Controlador principal de vistas, contraseña robusta, biometría en ajustes y clasificación
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // Pantallas principales (Flujo de acceso obligatorio)
     const authScreen = document.getElementById('authScreen');
     const gameScreen = document.getElementById('gameScreen');
 
@@ -42,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPlayAgain    = document.getElementById('btnPlayAgain');
     const btnCloseModal   = document.getElementById('btnCloseModal');
 
-    // Modal de Ajustes (Cambio de contraseña)
+    // Modal de Ajustes (Cambio Sensible de Contraseña con Biometría)
     const settingsModal         = document.getElementById('settingsModal');
     const btnCloseSettings      = document.getElementById('btnCloseSettings');
     const settingsUsernameLabel = document.getElementById('settingsUsernameLabel');
@@ -58,7 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsErrorMsg      = document.getElementById('settingsErrorMsg');
     const settingsSuccessMsg    = document.getElementById('settingsSuccessMsg');
 
+    // Elementos de Captura Biométrica Facial
+    const bioVideo       = document.getElementById('bioVideo');
+    const bioPreview     = document.getElementById('bioPreview');
+    const bioPlaceholder = document.getElementById('bioPlaceholder');
+    const bioCanvas      = document.getElementById('bioCanvas');
+    const bioStatusBadge = document.getElementById('bioStatusBadge');
+    const btnBioStartCam = document.getElementById('btnBioStartCam');
+    const btnBioSnap     = document.getElementById('btnBioSnap');
+    const bioFileInput   = document.getElementById('bioFileInput');
+
     let authMode = 'login';
+    let base64Face = '';
+    let activeStream = null;
     let record = parseInt(localStorage.getItem('si_best_score') || '0', 10);
     hudHiScore.textContent = record.toLocaleString();
 
@@ -95,22 +106,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return el.innerHTML;
     }
 
-    // Validación interactiva de reglas de contraseña
+    // =========================================================================
+    // 1. EVALUADOR DE CONTRASEÑA ROBUSTA (Crear Cuenta y Cambiar Contraseña)
+    // =========================================================================
     function checkPwdCriteria(pwd, username = '') {
         const p = pwd || '';
-        const len  = p.length >= 8;
-        const mix  = /[A-Z]/.test(p) && /[a-z]/.test(p);
-        const num  = /[0-9]/.test(p);
-        const sym  = /[^A-Za-z0-9]/.test(p);
+        const len    = p.length >= 8;
+        const mix    = /[A-Z]/.test(p) && /[a-z]/.test(p);
+        const num    = /[0-9]/.test(p);
+        const sym    = /[^A-Za-z0-9]/.test(p);
         const noUser = !username || username.length < 3 || !p.toLowerCase().includes(username.toLowerCase());
-        return { len, mix, num, sym, valid: len && mix && num && sym && noUser };
+        const count  = (len ? 1 : 0) + (mix ? 1 : 0) + (num ? 1 : 0) + (sym ? 1 : 0);
+
+        let level = 0;
+        let label = 'Requerida';
+        if (p.length > 0) {
+            if (!noUser || count <= 1) { level = 1; label = 'Débil'; }
+            else if (count === 2)      { level = 2; label = 'Regular'; }
+            else if (count === 3)      { level = 3; label = 'Aceptable'; }
+            else                       { level = 4; label = 'Robusta'; }
+        }
+
+        return { len, mix, num, sym, noUser, level, label, valid: len && mix && num && sym && noUser };
     }
 
-    function bindPasswordRules(inputEl, prefix, getUsernameFn) {
-        const elLen = document.getElementById(`${prefix}RuleLen`);
-        const elMix = document.getElementById(`${prefix}RuleMix`);
-        const elNum = document.getElementById(`${prefix}RuleNum`);
-        const elSym = document.getElementById(`${prefix}RuleSym`);
+    function bindPasswordMeter(inputEl, prefix, getUsernameFn) {
+        const elLen   = document.getElementById(`${prefix}RuleLen`);
+        const elMix   = document.getElementById(`${prefix}RuleMix`);
+        const elNum   = document.getElementById(`${prefix}RuleNum`);
+        const elSym   = document.getElementById(`${prefix}RuleSym`);
+        const elLabel = document.getElementById(`${prefix}StrengthLabel`);
+        const bars    = [
+            document.getElementById(`${prefix}Bar1`),
+            document.getElementById(`${prefix}Bar2`),
+            document.getElementById(`${prefix}Bar3`),
+            document.getElementById(`${prefix}Bar4`)
+        ];
 
         const update = () => {
             const c = checkPwdCriteria(inputEl.value, getUsernameFn ? getUsernameFn() : '');
@@ -118,6 +149,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elMix) elMix.classList.toggle('done', c.mix);
             if (elNum) elNum.classList.toggle('done', c.num);
             if (elSym) elSym.classList.toggle('done', c.sym);
+
+            if (elLabel) {
+                elLabel.textContent = c.label;
+                elLabel.className = c.level > 0 ? `lvl-${c.level}` : '';
+            }
+
+            bars.forEach((b, idx) => {
+                if (!b) return;
+                b.className = 's-bar';
+                if (c.level > idx) {
+                    b.classList.add(`lvl-${c.level}`);
+                }
+            });
+
             return c;
         };
 
@@ -125,11 +170,83 @@ document.addEventListener('DOMContentLoaded', () => {
         return update;
     }
 
-    const updateAuthRules = bindPasswordRules(authPasswordInput, 'auth', () => authUsernameInput.value.trim());
-    const updateSettingsRules = bindPasswordRules(newPasswordInput, 'set', () => window.ApiClient.getUsername());
+    const updateAuthRules = bindPasswordMeter(authPasswordInput, 'auth', () => authUsernameInput.value.trim());
+    const updateSettingsRules = bindPasswordMeter(newPasswordInput, 'set', () => window.ApiClient.getUsername());
     authUsernameInput.addEventListener('input', updateAuthRules);
 
-    // Transición entre Pantalla de Acceso y Pantalla de Juego
+    // =========================================================================
+    // 2. CÁMARA Y CAPTURA BIOMÉTRICA (Para Cambio Sensible de Contraseña)
+    // =========================================================================
+    function stopCameraStream() {
+        if (activeStream) {
+            activeStream.getTracks().forEach(track => track.stop());
+            activeStream = null;
+        }
+        bioVideo.srcObject = null;
+        bioVideo.style.display = 'none';
+        btnBioSnap.style.display = 'none';
+    }
+
+    function resetBiometricScanner() {
+        stopCameraStream();
+        base64Face = '';
+        bioPreview.src = '';
+        bioPreview.style.display = 'none';
+        bioPlaceholder.style.display = 'flex';
+        bioStatusBadge.textContent = 'Pendiente';
+        bioStatusBadge.classList.remove('ready');
+        bioFileInput.value = '';
+    }
+
+    function setCapturedFace(dataUrl) {
+        stopCameraStream();
+        base64Face = dataUrl;
+        bioPreview.src = dataUrl;
+        bioPlaceholder.style.display = 'none';
+        bioPreview.style.display = 'block';
+        bioStatusBadge.textContent = 'Rostro listo';
+        bioStatusBadge.classList.add('ready');
+    }
+
+    btnBioStartCam.addEventListener('click', async () => {
+        settingsErrorMsg.style.display = 'none';
+        try {
+            stopCameraStream();
+            activeStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } }
+            });
+            bioVideo.srcObject = activeStream;
+            bioVideo.style.display = 'block';
+            bioPreview.style.display = 'none';
+            bioPlaceholder.style.display = 'none';
+            btnBioSnap.style.display = 'inline-flex';
+        } catch (err) {
+            settingsErrorMsg.textContent = 'El navegador requiere HTTPS para cámara en vivo. Usa el botón "Subir / Tomar foto".';
+            settingsErrorMsg.style.display = 'block';
+        }
+    });
+
+    btnBioSnap.addEventListener('click', () => {
+        const ctx = bioCanvas.getContext('2d');
+        bioCanvas.width = bioVideo.videoWidth || 400;
+        bioCanvas.height = bioVideo.videoHeight || 400;
+        ctx.drawImage(bioVideo, 0, 0, bioCanvas.width, bioCanvas.height);
+        setCapturedFace(bioCanvas.toDataURL('image/jpeg', 0.85));
+    });
+
+    bioFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setCapturedFace(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // =========================================================================
+    // 3. FLUJO DE PANTALLAS (ACCESO OBLIGATORIO ANTES DEL JUEGO)
+    // =========================================================================
     function enterGameScreen(username, bestScore = null) {
         displayUsername.textContent = username;
         settingsUsernameLabel.textContent = username;
@@ -147,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function returnToAuthScreen(defaultMode = 'login') {
         game.stop();
+        stopCameraStream();
         scoreModal.classList.remove('active');
         settingsModal.classList.remove('active');
         gameScreen.style.display = 'none';
@@ -156,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => authUsernameInput.focus(), 60);
     }
 
-    // Verificación inicial al cargar la aplicación
     async function initSessionGate() {
         const token = window.ApiClient.getToken();
         if (!token) {
@@ -178,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Cambiar entre Iniciar Sesión y Crear Cuenta
     function setAuthMode(mode) {
         authMode = mode;
         authErrorMsg.style.display = 'none';
@@ -192,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            authRulesBox.style.display = 'grid';
+            authRulesBox.style.display = 'flex';
             updateAuthRules();
             btnAuthSubmit.textContent = 'Registrarse y jugar';
             authSwitchPrompt.innerHTML = '¿Ya tienes cuenta? <button type="button" id="btnSwitchMode">Iniciar sesión</button>';
@@ -234,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (authMode === 'register') {
             const check = checkPwdCriteria(password, username);
             if (!check.valid) {
-                authErrorMsg.textContent = 'Completa los 4 requisitos de contraseña para crear tu cuenta.';
+                authErrorMsg.textContent = 'Cumple con los 4 requisitos de contraseña robusta para crear tu cuenta.';
                 authErrorMsg.style.display = 'block';
                 authPasswordInput.focus();
                 return;
@@ -278,7 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Cerrar sesión
     async function performLogout() {
         try {
             await window.ApiClient.request('logout', {});
@@ -290,7 +405,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLogout.addEventListener('click', performLogout);
     btnHeaderLogout.addEventListener('click', performLogout);
 
-    // Fin de partida y Clasificación
+    // =========================================================================
+    // 4. CLASIFICACIÓN Y FIN DE PARTIDA
+    // =========================================================================
     async function handleGameOver(score) {
         modalHeading.textContent = 'Fin de la partida';
         scoreBannerBox.style.display = 'flex';
@@ -368,7 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
         scoresBody.innerHTML = html;
     }
 
-    // Modal de Ajustes y Cambio de Contraseña
+    // =========================================================================
+    // 5. MODAL DE AJUSTES (CAMBIO DE CONTRASEÑA CON CONTRASEÑA ROBUSTA + BIOMETRÍA)
+    // =========================================================================
     function openSettingsModal() {
         if (game.state === 'PLAYING') game.togglePause();
 
@@ -378,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newPasswordInput.value = '';
         confirmPasswordInput.value = '';
         updateSettingsRules();
+        resetBiometricScanner();
         settingsUsernameLabel.textContent = window.ApiClient.getUsername();
 
         settingsModal.classList.add('active');
@@ -385,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeSettingsModal() {
+        stopCameraStream();
         settingsModal.classList.remove('active');
     }
 
@@ -400,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentPassword || !newPassword || !confirmPassword) return;
 
         if (newPassword !== confirmPassword) {
-            settingsErrorMsg.textContent = 'Las contraseñas nuevas no coinciden.';
+            settingsErrorMsg.textContent = 'La nueva contraseña y su confirmación no coinciden.';
             settingsErrorMsg.style.display = 'block';
             return;
         }
@@ -413,19 +534,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const check = checkPwdCriteria(newPassword, window.ApiClient.getUsername());
         if (!check.valid) {
-            settingsErrorMsg.textContent = 'Cumple con los 4 requisitos para la nueva contraseña.';
+            settingsErrorMsg.textContent = 'Cumple con los 4 requisitos de contraseña robusta para la nueva contraseña.';
             settingsErrorMsg.style.display = 'block';
             newPasswordInput.focus();
             return;
         }
 
+        if (!base64Face) {
+            settingsErrorMsg.textContent = 'Captura o sube tu fotografía facial para autorizar el cambio de contraseña.';
+            settingsErrorMsg.style.display = 'block';
+            return;
+        }
+
         btnChangePwdSubmit.disabled = true;
+        btnChangePwdSubmit.textContent = 'Verificando biometría...';
 
         try {
             const res = await window.ApiClient.request('change_password', {
                 current_password: currentPassword,
                 new_password: newPassword,
-                confirm_password: confirmPassword
+                confirm_password: confirmPassword,
+                face_image: base64Face
             });
 
             if (res && res.success) {
@@ -436,8 +565,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 newPasswordInput.value = '';
                 confirmPasswordInput.value = '';
                 updateSettingsRules();
+                resetBiometricScanner();
 
-                settingsSuccessMsg.textContent = 'Contraseña actualizada correctamente.';
+                const conf = (res.data && res.data.biometric_confidence) ? ` · Biometría: ${res.data.biometric_confidence}` : '';
+                settingsSuccessMsg.textContent = `Contraseña actualizada correctamente${conf}`;
                 settingsSuccessMsg.style.display = 'block';
             } else {
                 settingsErrorMsg.textContent = (res && res.message) ? res.message : 'No se pudo cambiar la contraseña.';
@@ -448,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsErrorMsg.style.display = 'block';
         } finally {
             btnChangePwdSubmit.disabled = false;
+            btnChangePwdSubmit.textContent = 'Verificar rostro y actualizar contraseña';
         }
     });
 
@@ -482,7 +614,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     [scoreModal, settingsModal].forEach((modal) => {
         modal.addEventListener('mousedown', (e) => {
-            if (e.target === modal) modal.classList.remove('active');
+            if (e.target === modal) {
+                if (modal === settingsModal) closeSettingsModal();
+                else modal.classList.remove('active');
+            }
         });
     });
 

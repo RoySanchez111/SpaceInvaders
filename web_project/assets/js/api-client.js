@@ -1,5 +1,5 @@
 /**
- * Cliente de comunicación con el servidor y sesión de jugador
+ * Cliente de comunicación con api/auth.php y gestión de sesión
  */
 window.ApiClient = {
     key: null,
@@ -86,7 +86,7 @@ window.ApiClient = {
             options.body = JSON.stringify(this.encode({ ...body, action }));
         }
 
-        const res = await fetch(`api.php?action=${encodeURIComponent(action)}`, options);
+        const res = await fetch(`api/auth.php?action=${encodeURIComponent(action)}`, options);
         const raw = await res.json();
         return this.decode(raw);
     }

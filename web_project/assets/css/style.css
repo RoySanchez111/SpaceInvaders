@@ -745,3 +745,144 @@ tr.rank-2 .col-player, tr.rank-3 .col-player { color: var(--text); font-weight: 
     .shortcuts { display: none; }
     .bottombar .btn-primary { width: 100%; }
 }
+
+/* ==========================================================================
+   5. MEDIDOR DE CONTRASEÑA ROBUSTA Y ESCÁNER BIOMÉTRICO (EN AJUSTES)
+   ========================================================================== */
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.pwd-strength-box {
+    background: #08090f;
+    border: 1px solid var(--border-subtle);
+    border-radius: 9px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.strength-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.strength-header strong {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+
+.strength-header strong.lvl-1 { color: var(--rose); }
+.strength-header strong.lvl-2 { color: #fb923c; }
+.strength-header strong.lvl-3 { color: var(--amber); }
+.strength-header strong.lvl-4 { color: var(--emerald); }
+
+.strength-bars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    height: 5px;
+}
+
+.s-bar {
+    background: var(--border);
+    border-radius: 99px;
+    transition: background 0.2s ease;
+}
+
+.s-bar.lvl-1 { background: var(--rose); }
+.s-bar.lvl-2 { background: #fb923c; }
+.s-bar.lvl-3 { background: var(--amber); }
+.s-bar.lvl-4 { background: var(--emerald); }
+
+.bio-section {
+    background: #08090f;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bio-status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.bio-status-badge.ready {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--emerald);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.bio-viewport {
+    position: relative;
+    width: 100%;
+    height: 165px;
+    background: #05060a;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bio-viewport video,
+.bio-viewport img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bio-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    text-align: center;
+    padding: 12px;
+}
+
+.bio-placeholder svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    fill: none;
+}
+
+.bio-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.bio-actions > * {
+    flex: 1;
+}
+
+@media (max-width: 560px) {
+    .form-row-2 { grid-template-columns: 1fr; }
+}

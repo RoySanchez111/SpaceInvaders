@@ -51,11 +51,24 @@ require_once __DIR__ . '/config/db.php';
                     </div>
                 </div>
 
-                <div class="rules-grid" id="authRulesBox" style="display: none;">
-                    <span class="rule-pill" id="authRuleLen">8+ caracteres</span>
-                    <span class="rule-pill" id="authRuleMix">Mayús y minús</span>
-                    <span class="rule-pill" id="authRuleNum">Al menos 1 número</span>
-                    <span class="rule-pill" id="authRuleSym">Al menos 1 símbolo</span>
+                <!-- Medidor de Contraseña Robusta (Activo al Crear Cuenta) -->
+                <div class="pwd-strength-box" id="authRulesBox" style="display: none;">
+                    <div class="strength-header">
+                        <span>Nivel de contraseña</span>
+                        <strong id="authStrengthLabel">Requerida</strong>
+                    </div>
+                    <div class="strength-bars">
+                        <span class="s-bar" id="authBar1"></span>
+                        <span class="s-bar" id="authBar2"></span>
+                        <span class="s-bar" id="authBar3"></span>
+                        <span class="s-bar" id="authBar4"></span>
+                    </div>
+                    <div class="rules-grid">
+                        <span class="rule-pill" id="authRuleLen">8+ caracteres</span>
+                        <span class="rule-pill" id="authRuleMix">Mayús y minús</span>
+                        <span class="rule-pill" id="authRuleNum">Al menos 1 número</span>
+                        <span class="rule-pill" id="authRuleSym">Al menos 1 símbolo</span>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width: 100%; height: 40px;">
@@ -186,12 +199,12 @@ require_once __DIR__ . '/config/db.php';
     </div>
 
     <!-- =====================================================================
-         MODAL: AJUSTES DE CUENTA
+         MODAL: AJUSTES (CAMBIO SENSIBLE DE CONTRASEÑA CON BIOMETRÍA)
          ===================================================================== -->
     <div class="overlay" id="settingsModal">
-        <div class="dialog">
+        <div class="dialog wide">
             <div class="dialog-head">
-                <span class="dialog-title">Ajustes</span>
+                <span class="dialog-title">Ajustes de cuenta</span>
                 <button type="button" class="btn-close" id="btnCloseSettings" aria-label="Cerrar">
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
@@ -205,19 +218,29 @@ require_once __DIR__ . '/config/db.php';
                 <button type="button" class="btn-text-danger" id="btnLogout">Cerrar sesión</button>
             </div>
 
-            <span class="section-caption">Cambiar contraseña</span>
-
             <div class="alert alert-error" id="settingsErrorMsg"></div>
             <div class="alert alert-ok" id="settingsSuccessMsg"></div>
 
             <form class="form-stack" id="changePwdForm">
-                <div class="field">
-                    <label for="currentPasswordInput">Contraseña actual</label>
-                    <div class="control">
-                        <input type="password" class="input" id="currentPasswordInput" minlength="3" required autocomplete="current-password">
-                        <button type="button" class="eye-btn" id="btnToggleCurrentPwd" tabindex="-1">
-                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                <div class="form-row-2">
+                    <div class="field">
+                        <label for="currentPasswordInput">Contraseña actual</label>
+                        <div class="control">
+                            <input type="password" class="input" id="currentPasswordInput" minlength="3" required autocomplete="current-password">
+                            <button type="button" class="eye-btn" id="btnToggleCurrentPwd" tabindex="-1">
+                                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirmPasswordInput">Confirmar nueva</label>
+                        <div class="control">
+                            <input type="password" class="input" id="confirmPasswordInput" minlength="8" required autocomplete="new-password">
+                            <button type="button" class="eye-btn" id="btnToggleConfirmPwd" tabindex="-1">
+                                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -231,25 +254,61 @@ require_once __DIR__ . '/config/db.php';
                     </div>
                 </div>
 
-                <div class="rules-grid">
-                    <span class="rule-pill" id="setRuleLen">8+ caracteres</span>
-                    <span class="rule-pill" id="setRuleMix">Mayús y minús</span>
-                    <span class="rule-pill" id="setRuleNum">Al menos 1 número</span>
-                    <span class="rule-pill" id="setRuleSym">Al menos 1 símbolo</span>
+                <!-- Medidor de Contraseña Robusta (Al cambiar contraseña) -->
+                <div class="pwd-strength-box">
+                    <div class="strength-header">
+                        <span>Nivel de nueva contraseña</span>
+                        <strong id="setStrengthLabel">Requerida</strong>
+                    </div>
+                    <div class="strength-bars">
+                        <span class="s-bar" id="setBar1"></span>
+                        <span class="s-bar" id="setBar2"></span>
+                        <span class="s-bar" id="setBar3"></span>
+                        <span class="s-bar" id="setBar4"></span>
+                    </div>
+                    <div class="rules-grid">
+                        <span class="rule-pill" id="setRuleLen">8+ caracteres</span>
+                        <span class="rule-pill" id="setRuleMix">Mayús y minús</span>
+                        <span class="rule-pill" id="setRuleNum">Al menos 1 número</span>
+                        <span class="rule-pill" id="setRuleSym">Al menos 1 símbolo</span>
+                    </div>
                 </div>
 
-                <div class="field">
-                    <label for="confirmPasswordInput">Confirmar nueva contraseña</label>
-                    <div class="control">
-                        <input type="password" class="input" id="confirmPasswordInput" minlength="8" required autocomplete="new-password">
-                        <button type="button" class="eye-btn" id="btnToggleConfirmPwd" tabindex="-1">
-                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <!-- Verificación Biométrica para Cambio Sensible -->
+                <div class="bio-section">
+                    <div class="bio-header">
+                        <span class="section-caption">Verificación facial para confirmar cambio</span>
+                        <span class="bio-status-badge" id="bioStatusBadge">Pendiente</span>
+                    </div>
+
+                    <div class="bio-viewport">
+                        <video id="bioVideo" autoplay playsinline style="display: none;"></video>
+                        <img id="bioPreview" alt="Captura biométrica" style="display: none;">
+                        <div class="bio-placeholder" id="bioPlaceholder">
+                            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span>Activa tu cámara o sube una foto frontal</span>
+                        </div>
+                        <canvas id="bioCanvas" width="400" height="400" style="display: none;"></canvas>
+                    </div>
+
+                    <div class="bio-actions">
+                        <button type="button" class="btn" id="btnBioStartCam">
+                            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            <span>Cámara</span>
                         </button>
+                        <button type="button" class="btn btn-primary" id="btnBioSnap" style="display: none;">
+                            <span>Capturar rostro</span>
+                        </button>
+                        <label class="btn" style="cursor: pointer;">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span>Subir / Tomar foto</span>
+                            <input type="file" id="bioFileInput" accept="image/*" capture="user" style="display: none;">
+                        </label>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="btnChangePwdSubmit" style="width: 100%; height: 40px;">
-                    Actualizar contraseña
+                    Verificar rostro y actualizar contraseña
                 </button>
             </form>
         </div>
