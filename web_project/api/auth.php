@@ -22,6 +22,13 @@ try {
     $rawInput = file_get_contents('php://input');
     $payload = decodeRequestPayload($rawInput, $isRequestEncoded);
 
+    // Acepta ambos formatos: JSON (application/json) y FormData / $_POST tradicional
+    $payload = array_merge($_POST, is_array($payload) ? $payload : []);
+    if (!empty($_FILES['face_image']['tmp_name']) && is_uploaded_file($_FILES['face_image']['tmp_name'])) {
+        $mime = mime_content_type($_FILES['face_image']['tmp_name']) ?: 'image/jpeg';
+        $payload['face_image'] = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($_FILES['face_image']['tmp_name']));
+    }
+
     $action = $payload['action'] ?? $_GET['action'] ?? '';
 
     switch ($action) {
